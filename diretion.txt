@@ -11,3 +11,13 @@
 אויב = if
 טאָן = do
 דעמאָלט = then
+פּראָגראַם = program
+בייַטעוו = var
+קעסיידער = const
+ינטאַדזשער = integer
+אָנהייבן = begin
+סוף = end
+שרייבן = write
+שרייבנפּאַס = writeln
+לייענען = read
+ליינענפּאַס = eadln
