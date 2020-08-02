@@ -3,7 +3,7 @@ program TY_COMPILER;
 uses Sysutils,crt;
 
 var
-     //   fille : TextFile;
+        fille : TextFile;
         line : widestring;
         fil : widestring;
 
@@ -85,7 +85,9 @@ function replace(wdstr : widestring):ansistring;
 
                                 if  notin(widechar(wdstr[i]),heb_alph)  then
                                                 //appendstr(replace,ansistring(wdstr[i]));
-                                                replace := replace+ansistring(wdstr[i]);     end;
+                                                replace := replace+ansistring(wdstr[i]) ;
+                                end;
+
 
  end;
 //function comp(wdstr : widestring) : string;
@@ -95,8 +97,13 @@ begin
 
      Assign(fille,path);
      reset(fille);
-     readln(fille, line);
-     writeln(replace(line));
+     while not EOF(fille) do
+     begin
+          readln(fille, line);
+          writeln(replace(line));
+
+          //write(replace(ld));
+     end;
      close(fille);
      readkey;
 
