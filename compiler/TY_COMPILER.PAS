@@ -1,12 +1,15 @@
 program TY_COMPILER;
 
-uses Sysutils,crt;
+uses strUtils,crt;
 
 var
-        fille : TextFile;
-        line : widestring;
-        fil : widestring;
-
+        ty_file : TextFile;
+        pas_file : Text_File;
+        paspath : ansistring;
+        lines : array of ansistring;
+        txt : widestring;
+        txt1 : ansistring;
+        i : longword;
 const
          path = 'C:\Turbo Yiddish\Turbo-Yiddish-master\thing.txt' ;
         //namee = 'thing.txt';
@@ -70,40 +73,47 @@ procedure reverse(wdstr : widestring);
         end;
 
 
-function replace(wdstr : widestring):ansistring;
-        var j,i : integer; t : integer;
+procedure replace(const wdstr : widestring, out : ansistring);
+        var j,i,e : integer; t : ansistring;
         begin
-                replace := '';
+                t := '';
                 j := length(wdstr);
 
                 for i := 1 to j do begin
 
-                                for t:=0 to hb_length-1 do
-                                         if wdstr[i] = heb_alph[t] then
+                                for e:=0 to hb_length-1 do
+                                         if wdstr[i] = heb_alph[e] then
                                                 //appendstr(replace,replace+heb_alph_name[t]);
-                                                replace := replace+heb_alph_name[t];
+                                                t := t+heb_alph_name[e];
 
                                 if  notin(widechar(wdstr[i]),heb_alph)  then
                                                 //appendstr(replace,ansistring(wdstr[i]));
-                                                replace := replace+ansistring(wdstr[i]) ;
+                                                t := t+ansistring(wdstr[i]) ;
                                 end;
-
+                                out := t;
 
  end;
-//function comp(wdstr : widestring) : string;
+
+function change_filetype(const org_path : ansistring): ansistring;
+begin
+
+end;
+
 
 
 begin
 
-     Assign(fille,path);
-     reset(fille);
-     while not EOF(fille) do
-     begin
-          readln(fille, line);
-          writeln(replace(line));
+     Assign(ty_file,path);
+     reset(ty_file);
+     
+     read(ty_file,txt);
+     replace(txt,txt1);
+     lines = SplitString(txt1);
+     for i := 0 to length(lines) do
+	begin
+		
+	end;
 
-          //write(replace(ld));
-     end;
      close(fille);
      readkey;
 
