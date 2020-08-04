@@ -8,7 +8,7 @@ var
         fil : widestring;
 
 const
-         path = 'C:\Program Files (x86)\Turbo Yiddish\thing.txt' ;
+         path = 'C:\Turbo Yiddish\Turbo-Yiddish-master\thing.txt' ;
         //namee = 'thing.txt';
 
         lt = UnicodeChar(#$05d0);
@@ -73,7 +73,7 @@ procedure reverse(wdstr : widestring);
 function replace(wdstr : widestring):ansistring;
         var j,i : integer; t : integer;
         begin
-
+                replace := '';
                 j := length(wdstr);
 
                 for i := 1 to j do begin
