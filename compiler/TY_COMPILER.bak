@@ -1,19 +1,19 @@
 program TY_COMPILER;
-
-uses strUtils,crt;
+{$APPTYPE CONSOLE}
+uses strUtils,Classes,sysUtils,crt;
 
 var
         ty_file : TextFile;
-        pas_file : Text_File;
+        pas_file : TextFile;
         paspath : ansistring;
-        lines : array of ansistring;
+        lines : TStringArray;
         txt : widestring;
-        txt1 : ansistring;
+        txt1 : string;
         i : longword;
 const
          path = 'C:\Turbo Yiddish\Turbo-Yiddish-master\thing.txt' ;
         //namee = 'thing.txt';
-
+        h = ';';
         lt = UnicodeChar(#$05d0);
         lc = UnicodeChar(#$05d1);
         ld = UnicodeChar(#$05d3);
@@ -73,7 +73,7 @@ procedure reverse(wdstr : widestring);
         end;
 
 
-procedure replace(const wdstr : widestring, out : ansistring);
+procedure replace(const wdstr : widestring; out : ansistring);
         var j,i,e : integer; t : ansistring;
         begin
                 t := '';
@@ -94,9 +94,16 @@ procedure replace(const wdstr : widestring, out : ansistring);
 
  end;
 
-function change_filetype(const org_path : ansistring): ansistring;
+function change_filetype(const org_path,new_path : ansistring): ansistring;
+var i : integer;
 begin
-
+	change_filetype := org_path;
+	for i := length(change_filetype)-1 to 0 do
+		if not (change_filetype[i] = '.') then
+			change_filetype[i] := char('')
+		else
+			break;
+	change_filetype := change_filetype + new_path;
 end;
 
 
@@ -105,16 +112,17 @@ begin
 
      Assign(ty_file,path);
      reset(ty_file);
-     
+
      read(ty_file,txt);
      replace(txt,txt1);
-     lines = SplitString(txt1);
+
+     lines = splitString(txt1,string(';'));
      for i := 0 to length(lines) do
 	begin
 		
 	end;
 
-     close(fille);
+     close(ty_file);
      readkey;
 
  end.
