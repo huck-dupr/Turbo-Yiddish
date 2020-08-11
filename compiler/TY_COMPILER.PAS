@@ -120,10 +120,7 @@ begin
             End;
      
 
-     for i := 0 to length(lines) do
-	begin
-		
-	end;
+     
 
      close(ty_file);
      readkey;
