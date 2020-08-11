@@ -1,5 +1,5 @@
 program TY_COMPILER;
-{$APPTYPE CONSOLE}
+
 uses strUtils,Classes,sysUtils,crt;
 
 var
@@ -73,7 +73,7 @@ procedure reverse(wdstr : widestring);
         end;
 
 
-procedure replace(const wdstr : widestring; out : ansistring);
+Function replace(const wdstr : widestring):string;
         var j,i,e : integer; t : ansistring;
         begin
                 t := '';
@@ -90,7 +90,7 @@ procedure replace(const wdstr : widestring; out : ansistring);
                                                 //appendstr(replace,ansistring(wdstr[i]));
                                                 t := t+ansistring(wdstr[i]) ;
                                 end;
-                                out := t;
+                                Replace := t;
 
  end;
 
@@ -112,11 +112,14 @@ begin
 
      Assign(ty_file,path);
      reset(ty_file);
+     I := 0;
+     While not EOF(ty_file) do
+           Begin 
+           readln(ty_file,lines[i]);
+           I := I +1;
+            End;
+     
 
-     read(ty_file,txt);
-     replace(txt,txt1);
-
-     lines = splitString(txt1,string(';'));
      for i := 0 to length(lines) do
 	begin
 		
