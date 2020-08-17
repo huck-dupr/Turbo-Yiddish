@@ -2,18 +2,30 @@ program TY_COMPILER;
 
 uses strUtils,Classes,sysUtils,crt;
 
+TYPE
+TOKENS = (NUMBER{0-9},EOL{;},KEYWORD,SIGN{One | multipul letters});
+token = record
+        tok : TOKENS;
+        val : string;
+end;
+state = record//for what was in the line befor
+        tok : TOKENS;
+        string_of_what_was : string;
+end;
+
 var
+        tokline : array of token;
         ty_file : TextFile;
         pas_file : TextFile;
         paspath : ansistring;
         line : string;
-        txt : widestring;
-        txt1 : string;
+        linesArray : array of string;
         i : longword;
+        s : state;
 const
          path = 'C:\Turbo Yiddish\Turbo-Yiddish-master\thing.txt' ;
         //namee = 'thing.txt';
-        h = ';';
+
         lt = UnicodeChar(#$05d0);
         lc = UnicodeChar(#$05d1);
         ld = UnicodeChar(#$05d2);
@@ -49,7 +61,7 @@ const
 
 
         heb_alph : array [0..31] of widechar = (lt,lc,ld,ls,lv,lu,lz,lj,ly,lh,ll,lf,lk,lo,ln,li,lb,lx,lg,lpx,lp,lmx,lm,le,lr,la,lyx,lq,lw,lcx,lfx,lpxx);
-        heb_alph_name : array [0..31] of string = ('lt`','lc`','ld`','ls`','lv`','lu`','lz`','lj`','ly`','lh`','ll`','lf`','lk`','lo`','ln`','li`','lb`','lx`','lg`','lpx`','lp`','lmx`','lm`','le`','lr`','la`','lyx`','lq`','lw`','lcx`','lfx`','lpxx`');
+        heb_alph_name : array [0..31] of string = ('lt','lc','ld','ls','lv','lu','lz','lj','ly','lh','ll','lf','lk','lo','ln','li','lb','lx','lg','lpx','lp','lmx','lm','le','lr','la','lyx','lq','lw','lcx','lfx','lpxx');
         hb_length = 32;
 
 
@@ -62,7 +74,14 @@ begin
                 begin notin := false; break; end;
 end;
 
-
+function notin(const ich : char;const arr : string): boolean;
+var e : widechar;
+begin
+   notin := true;
+   for e in arr do
+        if e = ich then
+                begin notin := false; break; end;
+end;
 
 
 
@@ -99,17 +118,73 @@ begin
 	change_filetype := change_filetype + new_path;
 end;
 
-function count_lines(const nameOrPath : string):cardinal;
-var f : textFile;
-begin
-        while not(EOF(f)) do
-                begin
-                count_lines := count_lines +1;
-                readln(f);
-                end;
-        close(f);
 
+
+procedure lexer(const line : string; Args : array of string;output : array of token;previous_line : state);
+var i,j : integer;    lin : string; g : char;first_line : Boolean;
+
+begin
+j := 0;
+first_line := true;
+lin := line;
+for i := 0 to length(Args) do lin := lin + Args[i];
+if notin(';',lin) then begin
+        args := args[length(args)] lin;
+        exit;
 end;
+for i := 0 to length(lin) do begin
+        g := lin[i];
+        case g of
+                '0'..'9':begin if first_line then begin
+                                previous_line.tok := number;         previous_line.string_of_what_was := g;  end
+                        else if previous_line.tok = keyword then begin
+                                previous_line.tok := keyword;
+                                previous_line.string_of_what_was := previous_line.string_of_what_was + g; end
+                        else if not(previous_line.tok = number) and not(first_line) then begin
+                                output[j].tok := previous_line.tok;
+                                output[j].val := previous_line.string_of_what_was;
+                                previous_line.tok := number;
+                                previous_line.string_of_what_was := g;    end
+                        else begin
+                                previous_line.tok := number;
+                                previous_line.string_of_what_was := previous_line.string_of_what_was + g;
+                        end; j := j + 1;
+                end;
+
+               'a'..'z','A'..'Z','_': begin if first_line then begin
+                                previous_line.tok := keyword;         previous_line.string_of_what_was := g;  end
+                        else if not(previous_line.tok = keyword) and not(first_line) then begin
+                                output[j].tok := previous_line.tok;
+                                output[j].val := previous_line.string_of_what_was;
+                                previous_line.tok := keyword;
+                                previous_line.string_of_what_was := g;    end
+                        else begin
+                                previous_line.tok := keyword;
+                                previous_line.string_of_what_was := previous_line.string_of_what_was + g;
+                        end;j := j + 1;
+                end;
+
+                '!','?','@','%','^','&'.'*','(',')','-','=','+','[',']','{','}','\','|',';',':'
+                ,UTF8encode(UnicodeChar(#$0027)),'"',',','<','.','>','/','`','~':
+                begin if first_line then begin
+                                previous_line.tok := sign;         previous_line.string_of_what_was := g;  end
+                        else if not(previous_line.tok = sign) and not(first_line) then begin
+                                output[j].tok := previous_line.tok;
+                                output[j].val := previous_line.string_of_what_was;
+                                previous_line.tok := sign;
+                                previous_line.string_of_what_was := g;    end
+                        else begin
+                                previous_line.tok := sign;
+                                previous_line.string_of_what_was := previous_line.string_of_what_was + g;
+                        end;j := j + 1;
+                end;
+
+                else raise Exception.create('only Yiddish & English charactar allowed');
+        end;
+END;
+
+
+
 
 begin
 
@@ -121,8 +196,8 @@ begin
        Begin
            readln(ty_file,line);
            line := replace(line);
+           lexer(line,linesArray,tokline,s);
 
-           //lexer goes here
        End;
 
      close(ty_file);
