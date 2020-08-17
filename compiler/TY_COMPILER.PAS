@@ -21,9 +21,9 @@ var
         line : string;
         linesArray : array of string;
         i : longword;
-        s : state;
+
 const
-         path = 'C:\Turbo Yiddish\Turbo-Yiddish-master\thing.txt' ;
+         path = 'C:\Turbo Yiddish\Turbo-Yiddish-master\thing.ty' ;
         //namee = 'thing.txt';
         apostophe = Chr($27);
         lt = UnicodeChar(#$05d0);
@@ -120,8 +120,8 @@ end;
 
 
 
-procedure lexer(const line : string; Args : array of string;output : array of token;previous_line : state);
-var i,j,l : integer;    lin : string; g : char;first_line : Boolean;
+procedure lexer(const line : string; Args : array of string;output : array of token);
+var i,j,l : integer;    lin : string; g : char;first_line : Boolean;previous_line : state ;
 
 begin
 j := 0;
@@ -204,15 +204,16 @@ begin
        Begin
            readln(ty_file,line);
            line := replace(line);
-           lexer(line,linesArray,tokline,s);
+           lexer(line,linesArray,tokline);
 
        End;
-
+     for i:=0 to length(linesArray) do begin
+         write(' ',tokline[i].tok,' ',tokline[i].val,' ');
+     end;
      close(ty_file);
      readkey;
 
  end.
-
 
 
 
