@@ -3,7 +3,8 @@ program TY_COMPILER;
 uses strUtils,Classes,sysUtils,crt;
 
 TYPE
-TOKENS = (NUMBER{0-9},EOL{;},KEYWORD,SIGN{One | multipul letters});
+TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnparenthes{(},clsparenthes{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|},xorr{#},nor{~|},nxor{~|},eql{=},shftl{<<}shftr{>>},iseql{==,<,>
+,typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'},str{"},dot{.});
 token = record
         tok : TOKENS;
         val : string;
@@ -23,7 +24,7 @@ var
         i : longword;
 
 const
-         path = 'C:\Turbo Yiddish\Turbo-Yiddish-master\thing.ty' ;
+         path = 'C:/Turbo-Yiddish-lexer/thing.ty' ;
         //namee = 'thing.txt';
         apostophe = Chr($27);
         lt = UnicodeChar(#$05d0);
@@ -127,68 +128,7 @@ begin
 j := 0;
 first_line := true;
 lin := line;
-for i := 0 to length(Args) do lin := lin + Args[i];
-if notin(';',lin) then begin
-        l := 0;
-        while args[l] <> '' do l := l + 1;
-        args[l] :=  lin;
-        exit;
-end;
-for i := 0 to length(lin) do begin
-        g := lin[i];
-        case g of
-                '0'..'9':begin if first_line then begin
-                                previous_line.tok := number;         previous_line.string_of_what_was := g;  end
-                        else if previous_line.tok = keyword then begin
-                                previous_line.tok := keyword;
-                                previous_line.string_of_what_was := previous_line.string_of_what_was + g; end
-                        else if not(previous_line.tok = number) and not(first_line) then begin
-                                output[j].tok := previous_line.tok;
-                                output[j].val := previous_line.string_of_what_was;
-                                previous_line.tok := number;
-                                previous_line.string_of_what_was := g;    end
-                        else begin
-                                previous_line.tok := number;
-                                previous_line.string_of_what_was := previous_line.string_of_what_was + g;
-                        end; j := j + 1;
-                end;
 
-               'a'..'z','A'..'Z','_': begin if first_line then begin
-                                previous_line.tok := keyword;         previous_line.string_of_what_was := g;  end
-                        else if not(previous_line.tok = keyword) and not(first_line) then begin
-                                output[j].tok := previous_line.tok;
-                                output[j].val := previous_line.string_of_what_was;
-                                previous_line.tok := keyword;
-                                previous_line.string_of_what_was := g;    end
-                        else begin
-                                previous_line.tok := keyword;
-                                previous_line.string_of_what_was := previous_line.string_of_what_was + g;
-                        end;j := j + 1;
-                end;
-
-                '!','?','@','%','^','&','*','(',')','-','=','+','[',']','{','\','|',':'
-                ,apostophe,'"',',','<','.','>','/','`','~':
-                begin if first_line then begin
-                                previous_line.tok := sign;         previous_line.string_of_what_was := g;  end
-                        else if not(previous_line.tok = sign) and not(first_line) then begin
-                                output[j].tok := previous_line.tok;
-                                output[j].val := previous_line.string_of_what_was;
-                                previous_line.tok := sign;
-                                previous_line.string_of_what_was := g;    end
-                        else begin
-                                previous_line.tok := sign;
-                                previous_line.string_of_what_was := previous_line.string_of_what_was + g;
-                        end;j := j + 1;
-                end;
-                ';','}': begin
-                        output[j].tok := previous_line.tok;
-                        output[j].val := previous_line.string_of_what_was;
-                        previous_line.tok := EOL;
-                        previous_line.string_of_what_was := g;
-                        end;
-
-                else writeln('Only Yiddish and English charactors allowed'); exit(); end;
-        end;
 END;
 
 
@@ -207,6 +147,7 @@ begin
            lexer(line,linesArray,tokline);
 
        End;
+     if length(linesArray) <> 0 then
      for i:=0 to length(linesArray) do begin
          write(' ',tokline[i].tok,' ',tokline[i].val,' ');
      end;
@@ -214,7 +155,3 @@ begin
      readkey;
 
  end.
-
-
-
-
