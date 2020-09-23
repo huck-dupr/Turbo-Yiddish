@@ -7,7 +7,7 @@ TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnpar
 nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'},str{"},dot{.},spctab{ ,        });
 token = record
         tok : TOKENS;
-        val : string;
+        val : widestring;
 end;
 
 
@@ -18,8 +18,8 @@ var
         pas_file : TextFile;
         paspath : ansistring;
         line : widestring;
-        line0 : string;
-        linesArray : array of string;
+        a :longword;
+        linesArray : array of widestring;
         i : longword;
 
 const
@@ -71,7 +71,7 @@ begin
                 begin notin := false; break; end;
 end;
 
-function notin(const ich : char;const arr : string): boolean;
+function notin(const ich : widechar;const arr : widestring): boolean;
 var e : widechar;
 begin
    notin := true;
@@ -82,29 +82,6 @@ end;
 
 
 
-Function replace(const wdstr : widestring):string;
-        var j,i,e : integer; t : array of string; w : string;r:char; a : ansistring ;
-        begin
-
-                j := length(wdstr);
-
-                for i := 1 to j do begin
-
-                                for e:=0 to hb_length-1 do
-                                         if wdstr[i] = heb_alph[e] then begin
-                                                //appendstr(replace,replace+heb_alph_name[t]);
-                                                w := heb_alph_name[e];
-                                                t[i] := w;            end;
-
-                                if  notin(widechar(wdstr[i]),heb_alph)  then begin
-                                                //appendstr(replace,ansistring(wdstr[i]));
-                                                r:=char(wdstr[i]);
-                                                t[i]:=r;
-                                end;
-                a := a + t[i];
-                end;
-                replace := a;
- end;
 
 function change_filetype(const org_path,new_path : string): string;
 var i,j : integer;lin:string;g:char;
@@ -120,29 +97,21 @@ end;
 
 
 
-procedure lexer(line : string; Args : array of string;output : array of token;first_line : Boolean);
-var i,l : integer;    lin : string; g : char;previous_line : token ;
+procedure lexer(line : widestring; Args : array of widestring;output : array of token;first_line : Boolean);
+var i,l : integer;    lin : widestring; g : widechar;previous_line : token ;
 
 begin
 lin := line;
-for i := 0 to length(args) do lin := lin+args[i];
+for i := 1 to a do lin := lin+args[i];
 
-if notin(';',lin) then begin
-        l := 0;
-        while args[l] <> '' do l := l + 1;
-        args[l] := lin;
+if notin(unicodechar(';'),lin) then begin
+        a := a +1;
+        args[a] := lin;
         exit;
 end;
-
-for i:=0 to length(lin) do begin
+for i:=1 to a do begin
         g := lin[i];
         case g of
-                'A'..'Z','a'..'z','`','_':begin if first_line then begin
-                                previous_line.tok := keyword;   previous_line.val := g; end
-                        else if previous_line.tok = keyword then
-                                previous_line.val :=previous_line.val+g
-                        else output[i] := previous_line; previous_line.tok := number; previous_line.val := g;
-                end;
                 '0'..'9':begin if first_line then begin
                                 previous_line.tok := number; previous_line.val := g;
                         end
@@ -155,9 +124,17 @@ for i:=0 to length(lin) do begin
                         end;
 
                 end;
+
                 ' ',tab: if not(previous_line.tok = spctab) then begin
-                output[i] := previous_line; previous_line.tok := spctab; previous_line.val := g; end;
-                else write(g);
+                        output[i] := previous_line; previous_line.tok := spctab; previous_line.val := g;
+                end;
+
+                else begin if first_line then begin
+                                previous_line.tok := keyword;   previous_line.val := g; end
+                        else if previous_line.tok = keyword then
+                                previous_line.val :=previous_line.val+g
+                                else output[i] := previous_line; previous_line.tok := number; previous_line.val := g;
+                end;
        End;
 ENd;
 END;
@@ -170,16 +147,16 @@ begin
      reset(ty_file);
      assign(pas_file,change_filetype(path,'PAS'));
      rewrite(pas_file);
+     a := 0;
      While not EOF(ty_file) do
        Begin
            readln(ty_file,line);writeln(pas_file,UTF8Decode(line));
-           line0 := replace(UTF8decode(line));writeln(pas_file,line0);
-          // lexer(line,linesArray,tokline,first);
+           lexer(line,linesArray,tokline,first);
 
        End;
      if length(tokline) <> 0 then
-     for i:=0 to length(tokline) do
-         write(' ',tokline[i].tok,' ',tokline[i].val,' ');
+     for i:=1 to length(tokline) do
+         write(tokline[i].tok,' ',tokline[i].val,' ');
 
      close(ty_file);
      close(pas_file);
