@@ -1,32 +1,32 @@
 program TY_COMPILER;
 
-uses strUtils,Classes,sysUtils,crt;
+uses strUtils,Classes,sysUtils,crt,math;
 
 TYPE
-TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnparenthes{(},clsparenthes{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|},xorr{#},nor{~|},nxor{~|},eql{=},shftl{<<}shftr{>>},iseql{==,<,>
-,typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'},str{"},dot{.});
+TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnparenthes{(},clsparenthes{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|},xorr{#},nor{~|},nxor{~#},eql{=},shftl{<<},shftr{>>},iseql{==},
+nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'},str{"},dot{.},spctab{ ,        });
 token = record
         tok : TOKENS;
         val : string;
 end;
-state = record//for what was in the line befor
-        tok : TOKENS;
-        string_of_what_was : string;
-end;
+
 
 var
         tokline : array of token;
+        first : boolean;
         ty_file : TextFile;
         pas_file : TextFile;
         paspath : ansistring;
-        line : string;
+        line : widestring;
+        line0 : string;
         linesArray : array of string;
         i : longword;
 
 const
-         path = 'C:/Turbo-Yiddish-lexer/thing.ty' ;
+         path = 'C:\Turbo-Yiddish-newlexer\thing.ty' ;
         //namee = 'thing.txt';
-        apostophe = Chr($27);
+        apostophe = Char($27);
+        tab = Char($09);
         lt = UnicodeChar(#$05d0);
         lc = UnicodeChar(#$05d1);
         ld = UnicodeChar(#$05d2);
@@ -54,16 +54,12 @@ const
         lr = UnicodeChar(#$05e8);
         la = UnicodeChar(#$05e9);
         lyx = UnicodeChar(#$05ea);
-        lq = UnicodeChar(#$fb2e);
-        lw = UnicodeChar(#$fb2f);
-        lcx = UnicodeChar(#$fb4c);
-        lfx = UnicodeChar(#$fb4d);
-        lpxx = UnicodeChar(#$fb4e);
 
 
-        heb_alph : array [0..31] of widechar = (lt,lc,ld,ls,lv,lu,lz,lj,ly,lh,ll,lf,lk,lo,ln,li,lb,lx,lg,lpx,lp,lmx,lm,le,lr,la,lyx,lq,lw,lcx,lfx,lpxx);
-        heb_alph_name : array [0..31] of string = ('lt','lc','ld','ls','lv','lu','lz','lj','ly','lh','ll','lf','lk','lo','ln','li','lb','lx','lg','lpx','lp','lmx','lm','le','lr','la','lyx','lq','lw','lcx','lfx','lpxx');
-        hb_length = 32;
+
+        heb_alph : array [0..26] of widechar = (lt,lc,ld,ls,lv,lu,lz,lj,ly,lh,ll,lf,lk,lo,ln,li,lb,lx,lg,lpx,lp,lmx,lm,le,lr,la,lyx);
+        heb_alph_name : array [0..26] of string = ('t`','c`','d`','s`','v`','u`','z`','j`','y`','h`','l`','f`','k`','o`','n`','i`','b`','x`','g`','px`','p`','mx`','m`','e`','r`','a`','yx`');
+        hb_length = 27;
 
 
 function notin(const ich : widechar;const arr : array of widechar): boolean;
@@ -87,50 +83,84 @@ end;
 
 
 Function replace(const wdstr : widestring):string;
-        var j,i,e : integer; t : ansistring;
+        var j,i,e : integer; t : array of string; w : string;r:char; a : ansistring ;
         begin
-                t := '';
+
                 j := length(wdstr);
 
                 for i := 1 to j do begin
 
                                 for e:=0 to hb_length-1 do
-                                         if wdstr[i] = heb_alph[e] then
+                                         if wdstr[i] = heb_alph[e] then begin
                                                 //appendstr(replace,replace+heb_alph_name[t]);
-                                                t := t+heb_alph_name[e];
+                                                w := heb_alph_name[e];
+                                                t[i] := w;            end;
 
-                                if  notin(widechar(wdstr[i]),heb_alph)  then
+                                if  notin(widechar(wdstr[i]),heb_alph)  then begin
                                                 //appendstr(replace,ansistring(wdstr[i]));
-                                                t := t+ansistring(wdstr[i]) ;
+                                                r:=char(wdstr[i]);
+                                                t[i]:=r;
                                 end;
-                                Replace := t;
-
+                a := a + t[i];
+                end;
+                replace := a;
  end;
 
-function change_filetype(const org_path,new_path : ansistring): ansistring;
-var i : integer;
+function change_filetype(const org_path,new_path : string): string;
+var i,j : integer;lin:string;g:char;
 begin
-	change_filetype := org_path;
-	for i := length(change_filetype)-1 to 0 do
-		if not (change_filetype[i] = '.') then
-			change_filetype[i] := char('')
-		else
-			break;
-	change_filetype := change_filetype + new_path;
+        change_filetype := '';
+        for i := 0 to length(org_path) do
+		if change_filetype[i] = '.' then  break
+                else if i = 0 then  change_filetype :=  org_path[i]
+                else change_filetype := change_filetype + org_path[i];
+         change_filetype := copy(change_filetype,2,length(change_filetype)) + new_path;
+
 end;
 
 
 
-procedure lexer(const line : string; Args : array of string;output : array of token);
-var i,j,l : integer;    lin : string; g : char;first_line : Boolean;previous_line : state ;
+procedure lexer(line : string; Args : array of string;output : array of token;first_line : Boolean);
+var i,l : integer;    lin : string; g : char;previous_line : token ;
 
 begin
-j := 0;
-first_line := true;
 lin := line;
+for i := 0 to length(args) do lin := lin+args[i];
 
+if notin(';',lin) then begin
+        l := 0;
+        while args[l] <> '' do l := l + 1;
+        args[l] := lin;
+        exit;
+end;
+
+for i:=0 to length(lin) do begin
+        g := lin[i];
+        case g of
+                'A'..'Z','a'..'z','`','_':begin if first_line then begin
+                                previous_line.tok := keyword;   previous_line.val := g; end
+                        else if previous_line.tok = keyword then
+                                previous_line.val :=previous_line.val+g
+                        else output[i] := previous_line; previous_line.tok := number; previous_line.val := g;
+                end;
+                '0'..'9':begin if first_line then begin
+                                previous_line.tok := number; previous_line.val := g;
+                        end
+                        else if (previous_line.tok = keyword) or (previous_line.tok = number) then
+                                previous_line.val :=previous_line.val+g
+                        else begin
+                                output[i] := previous_line;
+                                previous_line.tok := number;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                ' ',tab: if not(previous_line.tok = spctab) then begin
+                output[i] := previous_line; previous_line.tok := spctab; previous_line.val := g; end;
+                else write(g);
+       End;
+ENd;
 END;
-
 
 
 
@@ -142,16 +172,17 @@ begin
      rewrite(pas_file);
      While not EOF(ty_file) do
        Begin
-           readln(ty_file,line);
-           line := replace(line);
-           lexer(line,linesArray,tokline);
+           readln(ty_file,line);writeln(pas_file,UTF8Decode(line));
+           line0 := replace(UTF8decode(line));writeln(pas_file,line0);
+          // lexer(line,linesArray,tokline,first);
 
        End;
-     if length(linesArray) <> 0 then
-     for i:=0 to length(linesArray) do begin
+     if length(tokline) <> 0 then
+     for i:=0 to length(tokline) do
          write(' ',tokline[i].tok,' ',tokline[i].val,' ');
-     end;
+
      close(ty_file);
+     close(pas_file);
      readkey;
 
  end.
