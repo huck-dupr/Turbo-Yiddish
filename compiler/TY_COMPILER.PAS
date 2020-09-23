@@ -1,6 +1,6 @@
 program TY_COMPILER;
 
-uses strUtils,Classes,sysUtils,crt;
+uses strUtils,Classes,sysUtils,crt,math;
 
 TYPE
 TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnparenthes{(},clsparenthes{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|},xorr{#},nor{~|},nxor{~#},eql{=},shftl{<<},shftr{>>},iseql{==},
@@ -17,7 +17,8 @@ var
         ty_file : TextFile;
         pas_file : TextFile;
         paspath : ansistring;
-        line : string;
+        line : widestring;
+        line0 : string;
         linesArray : array of string;
         i : longword;
 
@@ -53,16 +54,12 @@ const
         lr = UnicodeChar(#$05e8);
         la = UnicodeChar(#$05e9);
         lyx = UnicodeChar(#$05ea);
-        lq = UnicodeChar(#$fb2e);
-        lw = UnicodeChar(#$fb2f);
-        lcx = UnicodeChar(#$fb4c);
-        lfx = UnicodeChar(#$fb4d);
-        lpxx = UnicodeChar(#$fb4e);
 
 
-        heb_alph : array [0..31] of widechar = (lt,lc,ld,ls,lv,lu,lz,lj,ly,lh,ll,lf,lk,lo,ln,li,lb,lx,lg,lpx,lp,lmx,lm,le,lr,la,lyx,lq,lw,lcx,lfx,lpxx);
-        heb_alph_name : array [0..31] of string = ('lt','lc','ld','ls','lv','lu','lz','lj','ly','lh','ll','lf','lk','lo','ln','li','lb','lx','lg','lpx','lp','lmx','lm','le','lr','la','lyx','lq','lw','lcx','lfx','lpxx');
-        hb_length = 32;
+
+        heb_alph : array [0..26] of widechar = (lt,lc,ld,ls,lv,lu,lz,lj,ly,lh,ll,lf,lk,lo,ln,li,lb,lx,lg,lpx,lp,lmx,lm,le,lr,la,lyx);
+        heb_alph_name : array [0..26] of string = ('t`','c`','d`','s`','v`','u`','z`','j`','y`','h`','l`','f`','k`','o`','n`','i`','b`','x`','g`','px`','p`','mx`','m`','e`','r`','a`','yx`');
+        hb_length = 27;
 
 
 function notin(const ich : widechar;const arr : array of widechar): boolean;
@@ -86,24 +83,27 @@ end;
 
 
 Function replace(const wdstr : widestring):string;
-        var j,i,e : integer; t : ansistring;
+        var j,i,e : integer; t : array of string; w : string;r:char; a : ansistring ;
         begin
-                t := '';
+
                 j := length(wdstr);
 
                 for i := 1 to j do begin
 
                                 for e:=0 to hb_length-1 do
-                                         if wdstr[i] = heb_alph[e] then
+                                         if wdstr[i] = heb_alph[e] then begin
                                                 //appendstr(replace,replace+heb_alph_name[t]);
-                                                t := t+heb_alph_name[e];
+                                                w := heb_alph_name[e];
+                                                t[i] := w;            end;
 
-                                if  notin(widechar(wdstr[i]),heb_alph)  then
+                                if  notin(widechar(wdstr[i]),heb_alph)  then begin
                                                 //appendstr(replace,ansistring(wdstr[i]));
-                                                t := t+widestring(wdstr[i]) ;
+                                                r:=char(wdstr[i]);
+                                                t[i]:=r;
                                 end;
-                                Replace := t;
-
+                a := a + t[i];
+                end;
+                replace := a;
  end;
 
 function change_filetype(const org_path,new_path : string): string;
@@ -157,7 +157,8 @@ for i:=0 to length(lin) do begin
                 end;
                 ' ',tab: if not(previous_line.tok = spctab) then begin
                 output[i] := previous_line; previous_line.tok := spctab; previous_line.val := g; end;
-        End;    else write(g);
+                else write(g);
+       End;
 ENd;
 END;
 
@@ -171,9 +172,9 @@ begin
      rewrite(pas_file);
      While not EOF(ty_file) do
        Begin
-           readln(ty_file,line);
-           line := replace(line); writeln(line);
-           lexer(line,linesArray,tokline,first);
+           readln(ty_file,line);writeln(pas_file,UTF8Decode(line));
+           line0 := replace(UTF8decode(line));writeln(pas_file,line0);
+          // lexer(line,linesArray,tokline,first);
 
        End;
      if length(tokline) <> 0 then
@@ -181,6 +182,7 @@ begin
          write(' ',tokline[i].tok,' ',tokline[i].val,' ');
 
      close(ty_file);
+     close(pas_file);
      readkey;
 
  end.
