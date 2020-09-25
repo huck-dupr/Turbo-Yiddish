@@ -97,45 +97,54 @@ end;
 
 
 
-procedure lexer(line : widestring; Args : array of widestring;output : array of token;first_line : Boolean);
+procedure lexer(line : widestring; Args : array of widestring;output : array of token);  //can tokenize, problem with output
 var i,l : integer;    lin : widestring; g : widechar;previous_line : token ;
 
 begin
-lin := line;
-for i := 1 to a do lin := lin+args[i];
+lin := UTF8Decode(line);
+if a <> 0 then
+        for i := 0 to a do lin := lin+args[i];
 
 if notin(unicodechar(';'),lin) then begin
         a := a +1;
         args[a] := lin;
         exit;
 end;
-for i:=1 to a do begin
+for i:=1 to length(lin) do begin
+
         g := lin[i];
         case g of
-                '0'..'9':begin if first_line then begin
-                                previous_line.tok := number; previous_line.val := g;
+                '0'..'9':begin write('number '); if first then begin
+                                previous_line.tok := number; previous_line.val := g; first := false;
                         end
                         else if (previous_line.tok = keyword) or (previous_line.tok = number) then
                                 previous_line.val :=previous_line.val+g
                         else begin
-                                output[i] := previous_line;
+                                //output[i] := previous_line;
                                 previous_line.tok := number;
                                 previous_line.val := g;
                         end;
 
                 end;
 
-                ' ',tab: if not(previous_line.tok = spctab) then begin
-                        output[i] := previous_line; previous_line.tok := spctab; previous_line.val := g;
+                ' ',tab: if not(previous_line.tok = spctab) then begin write('spctab ');
+                        //if not first then output[i] := previous_line;
+                        previous_line.tok := spctab;
+                        previous_line.val := g;
                 end;
 
-                else begin if first_line then begin
-                                previous_line.tok := keyword;   previous_line.val := g; end
-                        else if previous_line.tok = keyword then
+                else begin write('keyword '); if first then begin
+                                previous_line.tok := keyword; previous_line.val := g; first := false;
+                        end
+                        else if (previous_line.tok = keyword) then
                                 previous_line.val :=previous_line.val+g
-                                else output[i] := previous_line; previous_line.tok := number; previous_line.val := g;
+                        else begin
+                                //output[i] := previous_line;
+                                previous_line.tok := keyword;
+                                previous_line.val := g;
+                        end;
                 end;
-       End;
+       End;  writeln(previous_line.val,previous_line.tok);
 ENd;
 END;
 
@@ -148,15 +157,16 @@ begin
      assign(pas_file,change_filetype(path,'PAS'));
      rewrite(pas_file);
      a := 0;
+     first := true;
      While not EOF(ty_file) do
        Begin
-           readln(ty_file,line);writeln(pas_file,UTF8Decode(line));
-           lexer(line,linesArray,tokline,first);
+           readln(ty_file,line);
+           lexer(line,linesArray,tokline);
 
        End;
-     if length(tokline) <> 0 then
-     for i:=1 to length(tokline) do
-         write(tokline[i].tok,' ',tokline[i].val,' ');
+     {if length(tokline) = 1 then}
+     {else  for i:=1 to length(tokline) do
+        writeln(pas_file,tokline[i].val+' ');}
 
      close(ty_file);
      close(pas_file);
