@@ -9,7 +9,7 @@ token = record
         tok : TOKENS;
         val : widestring;
 end;
-
+tokray = array of token;
 
 var
         tokline : array of token;
@@ -21,7 +21,7 @@ var
         a :longword;
         linesArray : array of widestring;
         i : longword;
-
+        output : tokray ;
 const
          path = 'C:\Turbo-Yiddish-newlexer\thing.ty' ;
         //namee = 'thing.txt';
@@ -97,8 +97,8 @@ end;
 
 
 
-procedure lexer(line : widestring; Args : array of widestring;output : array of token);  //can tokenize, problem with output
-var i,l : integer;    lin : widestring; g : widechar;previous_line : token ;
+procedure lexer(line : widestring; Args : array of widestring);
+var i,l,f : integer;    lin : widestring; g : widechar;previous_line : token ;
 
 begin
 lin := UTF8Decode(line);
@@ -111,41 +111,52 @@ if notin(unicodechar(';'),lin) then begin
         exit;
 end;
 for i:=1 to length(lin) do begin
-
+        f := length(output);
+        setlength(output,f+1);
         g := lin[i];
         case g of
-                '0'..'9':begin write('number '); if first then begin
+                '0'..'9':begin  if first then begin
                                 previous_line.tok := number; previous_line.val := g; first := false;
                         end
                         else if (previous_line.tok = keyword) or (previous_line.tok = number) then
                                 previous_line.val :=previous_line.val+g
                         else begin
-                                //output[i] := previous_line;
+
+                                output[f] := previous_line;
                                 previous_line.tok := number;
                                 previous_line.val := g;
                         end;
 
                 end;
 
-                ' ',tab: if not(previous_line.tok = spctab) then begin write('spctab ');
-                        //if not first then output[i] := previous_line;
+                ' ',tab: if not(previous_line.tok = spctab) then begin
+
+                        if not first then output[f] := previous_line;
                         previous_line.tok := spctab;
                         previous_line.val := g;
                 end;
 
-                else begin write('keyword '); if first then begin
+                else begin  if first then begin
                                 previous_line.tok := keyword; previous_line.val := g; first := false;
                         end
                         else if (previous_line.tok = keyword) then
                                 previous_line.val :=previous_line.val+g
                         else begin
-                                //output[i] := previous_line;
+
+                                output[f] := previous_line;
                                 previous_line.tok := keyword;
                                 previous_line.val := g;
                         end;
                 end;
-       End;  writeln(previous_line.val,previous_line.tok);
+       End;
 ENd;
+l := 0;
+for i:=0 to length(output)-1 do
+        if output[i].val <> '' then begin
+                setlength(tokline,l+1);
+                tokline[l] := output[i];
+                l := l+1;
+                end;
 END;
 
 
@@ -161,12 +172,11 @@ begin
      While not EOF(ty_file) do
        Begin
            readln(ty_file,line);
-           lexer(line,linesArray,tokline);
-
+           lexer(line,linesArray);
        End;
-     {if length(tokline) = 1 then}
-     {else  for i:=1 to length(tokline) do
-        writeln(pas_file,tokline[i].val+' ');}
+     writeln(length(tokline));
+     for i:=0 to length(tokline)-1 do
+        writeln(tokline[i].val,' ',tokline[i].tok);
 
      close(ty_file);
      close(pas_file);
