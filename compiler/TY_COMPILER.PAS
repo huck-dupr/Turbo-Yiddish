@@ -1,19 +1,32 @@
 program TY_COMPILER;
 
-uses strUtils,Classes,sysUtils,crt;
+uses strUtils,Classes,sysUtils,crt,math;
+
+TYPE
+TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnparenthes{(},clsparenthes{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|},xorr{#},nor{~|},nxor{~#},eql{=},shftl{<<},shftr{>>},iseql{==},
+nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'},str{"},dot{.},spctab{ ,        });
+token = record
+        tok : TOKENS;
+        val : widestring;
+end;
+tokray = array of token;
 
 var
+        tokline : array of token;
+        first : boolean;
         ty_file : TextFile;
         pas_file : TextFile;
         paspath : ansistring;
-        line : string;
-        txt : widestring;
-        txt1 : string;
+        line : widestring;
+        a :longword;
+        linesArray : array of widestring;
         i : longword;
+        output : tokray ;
 const
-         path = 'C:\Turbo Yiddish\Turbo-Yiddish-master\thing.txt' ;
+         path = 'C:\Turbo-Yiddish-newlexer\thing.ty' ;
         //namee = 'thing.txt';
-        h = ';';
+        apostophe = Char($27);
+        tab = Char($09);
         lt = UnicodeChar(#$05d0);
         lc = UnicodeChar(#$05d1);
         ld = UnicodeChar(#$05d2);
@@ -41,16 +54,12 @@ const
         lr = UnicodeChar(#$05e8);
         la = UnicodeChar(#$05e9);
         lyx = UnicodeChar(#$05ea);
-        lq = UnicodeChar(#$fb2e);
-        lw = UnicodeChar(#$fb2f);
-        lcx = UnicodeChar(#$fb4c);
-        lfx = UnicodeChar(#$fb4d);
-        lpxx = UnicodeChar(#$fb4e);
 
 
-        heb_alph : array [0..31] of widechar = (lt,lc,ld,ls,lv,lu,lz,lj,ly,lh,ll,lf,lk,lo,ln,li,lb,lx,lg,lpx,lp,lmx,lm,le,lr,la,lyx,lq,lw,lcx,lfx,lpxx);
-        heb_alph_name : array [0..31] of string = ('lt`','lc`','ld`','ls`','lv`','lu`','lz`','lj`','ly`','lh`','ll`','lf`','lk`','lo`','ln`','li`','lb`','lx`','lg`','lpx`','lp`','lmx`','lm`','le`','lr`','la`','lyx`','lq`','lw`','lcx`','lfx`','lpxx`');
-        hb_length = 32;
+
+        heb_alph : array [0..26] of widechar = (lt,lc,ld,ls,lv,lu,lz,lj,ly,lh,ll,lf,lk,lo,ln,li,lb,lx,lg,lpx,lp,lmx,lm,le,lr,la,lyx);
+        heb_alph_name : array [0..26] of string = ('t`','c`','d`','s`','v`','u`','z`','j`','y`','h`','l`','f`','k`','o`','n`','i`','b`','x`','g`','px`','p`','mx`','m`','e`','r`','a`','yx`');
+        hb_length = 27;
 
 
 function notin(const ich : widechar;const arr : array of widechar): boolean;
@@ -62,54 +71,95 @@ begin
                 begin notin := false; break; end;
 end;
 
-
-
-
-
-Function replace(const wdstr : widestring):string;
-        var j,i,e : integer; t : ansistring;
-        begin
-                t := '';
-                j := length(wdstr);
-
-                for i := 1 to j do begin
-
-                                for e:=0 to hb_length-1 do
-                                         if wdstr[i] = heb_alph[e] then
-                                                //appendstr(replace,replace+heb_alph_name[t]);
-                                                t := t+heb_alph_name[e];
-
-                                if  notin(widechar(wdstr[i]),heb_alph)  then
-                                                //appendstr(replace,ansistring(wdstr[i]));
-                                                t := t+ansistring(wdstr[i]) ;
-                                end;
-                                Replace := t;
-
- end;
-
-function change_filetype(const org_path,new_path : ansistring): ansistring;
-var i : integer;
+function notin(const ich : widechar;const arr : widestring): boolean;
+var e : widechar;
 begin
-	change_filetype := org_path;
-	for i := length(change_filetype)-1 to 0 do
-		if not (change_filetype[i] = '.') then
-			change_filetype[i] := char('')
-		else
-			break;
-	change_filetype := change_filetype + new_path;
+   notin := true;
+   for e in arr do
+        if e = ich then
+                begin notin := false; break; end;
 end;
 
-function count_lines(const nameOrPath : string):cardinal;
-var f : textFile;
+
+
+
+function change_filetype(const org_path,new_path : string): string;
+var i,j : integer;lin:string;g:char;
 begin
-        while not(EOF(f)) do
-                begin
-                count_lines := count_lines +1;
-                readln(f);
+        change_filetype := '';
+        for i := 0 to length(org_path) do
+		if change_filetype[i] = '.' then  break
+                else if i = 0 then  change_filetype :=  org_path[i]
+                else change_filetype := change_filetype + org_path[i];
+         change_filetype := copy(change_filetype,2,length(change_filetype)) + new_path;
+
+end;
+
+
+
+procedure lexer(line : widestring; Args : array of widestring);
+var i,l,f : integer;    lin : widestring; g : widechar;previous_line : token ;
+
+begin
+lin := UTF8Decode(line);
+if a <> 0 then
+        for i := 0 to a do lin := lin+args[i];
+
+if notin(unicodechar(';'),lin) then begin
+        a := a +1;
+        args[a] := lin;
+        exit;
+end;
+for i:=1 to length(lin) do begin
+        f := length(output);
+        setlength(output,f+1);
+        g := lin[i];
+        case g of
+                '0'..'9':begin  if first then begin
+                                previous_line.tok := number; previous_line.val := g; first := false;
+                        end
+                        else if (previous_line.tok = keyword) or (previous_line.tok = number) then
+                                previous_line.val :=previous_line.val+g
+                        else begin
+
+                                output[f] := previous_line;
+                                previous_line.tok := number;
+                                previous_line.val := g;
+                        end;
+
                 end;
-        close(f);
 
-end;
+                ' ',tab: if not(previous_line.tok = spctab) then begin
+
+                        if not first then output[f] := previous_line;
+                        previous_line.tok := spctab;
+                        previous_line.val := g;
+                end;
+
+                else begin  if first then begin
+                                previous_line.tok := keyword; previous_line.val := g; first := false;
+                        end
+                        else if (previous_line.tok = keyword) then
+                                previous_line.val :=previous_line.val+g
+                        else begin
+
+                                output[f] := previous_line;
+                                previous_line.tok := keyword;
+                                previous_line.val := g;
+                        end;
+                end;
+       End;
+ENd;
+l := 0;
+for i:=0 to length(output)-1 do
+        if output[i].val <> '' then begin
+                setlength(tokline,l+1);
+                tokline[l] := output[i];
+                l := l+1;
+                end;
+END;
+
+
 
 begin
 
@@ -117,20 +167,19 @@ begin
      reset(ty_file);
      assign(pas_file,change_filetype(path,'PAS'));
      rewrite(pas_file);
+     a := 0;
+     first := true;
      While not EOF(ty_file) do
        Begin
            readln(ty_file,line);
-           line := replace(line);
-
-           //lexer goes here
+           lexer(line,linesArray);
        End;
+     writeln(length(tokline));
+     for i:=0 to length(tokline)-1 do
+        writeln(tokline[i].val,' ',tokline[i].tok);
 
      close(ty_file);
+     close(pas_file);
      readkey;
 
  end.
-
-
-
-
-
