@@ -23,7 +23,7 @@ var
         i : longword;
         output : tokray ;
 const
-         path = 'C:\Turbo-Yiddish-newlexer\thing.ty' ;
+         path = 'C:\Turbo-Yiddish-master\thing.ty' ;
         //namee = 'thing.txt';
         apostophe = Char($27);
         tab = Char($09);
@@ -115,7 +115,7 @@ for i:=1 to length(lin) do begin
         setlength(output,f+1);
         g := lin[i];
         case g of
-                '0'..'9':begin  if first then begin
+                '0'..'9':begin   if first then begin
                                 previous_line.tok := number; previous_line.val := g; first := false;
                         end
                         else if (previous_line.tok = keyword) or (previous_line.tok = number) then
@@ -124,6 +124,17 @@ for i:=1 to length(lin) do begin
 
                                 output[f] := previous_line;
                                 previous_line.tok := number;
+                                previous_line.val := g;
+
+                        end;
+
+                end;
+                ';':begin  if first then begin
+                                previous_line.tok := EOL; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok := EOL;
                                 previous_line.val := g;
                         end;
 
@@ -150,6 +161,10 @@ for i:=1 to length(lin) do begin
                 end;
        End;
 ENd;
+output[f+1] := previous_line;
+first := true;
+
+
 l := 0;
 for i:=0 to length(output)-1 do
         if output[i].val <> '' then begin
@@ -174,7 +189,7 @@ begin
            readln(ty_file,line);
            lexer(line,linesArray);
        End;
-     writeln(length(tokline));
+
      for i:=0 to length(tokline)-1 do
         writeln(tokline[i].val,' ',tokline[i].tok);
 
