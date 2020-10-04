@@ -19,7 +19,7 @@ var
         paspath : ansistring;
         line : widestring;
         a :longword;
-        linesArray : array of widestring;
+        Args : array of widestring;
         i : longword;
         output : tokray ;
 const
@@ -97,7 +97,7 @@ end;
 
 
 
-procedure lexer(line : widestring; Args : array of widestring);
+procedure lexer(line : widestring);
 var i,l,f : integer;    lin : widestring; g : widechar;previous_line : token ;
 
 begin
@@ -106,10 +106,12 @@ if a <> 0 then
         for i := 0 to a do lin := lin+args[i];
 
 if notin(unicodechar(';'),lin) then begin
-        a := a +1;
-        args[a] := lin;
+        a:=a+1;
+        setlength(Args,a);
+        //args[a] := lin;
         exit;
 end;
+ {
 for i:=1 to length(lin) do begin
         f := length(output);
         setlength(output,f+1);
@@ -171,7 +173,7 @@ for i:=0 to length(output)-1 do
                 setlength(tokline,l+1);
                 tokline[l] := output[i];
                 l := l+1;
-                end;
+                end; }
 END;
 
 
@@ -187,11 +189,11 @@ begin
      While not EOF(ty_file) do
        Begin
            readln(ty_file,line);
-           lexer(line,linesArray);
+           lexer(line);
        End;
-
-     for i:=0 to length(tokline)-1 do
-        writeln(tokline[i].val,' ',tokline[i].tok);
+     writeln(a);
+     {for i:=0 to length(tokline)-1 do
+        writeln(tokline[i].val,' ',tokline[i].tok); }
 
      close(ty_file);
      close(pas_file);
