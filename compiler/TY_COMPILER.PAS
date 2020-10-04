@@ -102,19 +102,20 @@ var i,l,f : integer;    lin : widestring; g : widechar;previous_line : token ;
 
 begin
 lin := UTF8Decode(line);
-if a <> 0 then
-        for i := 0 to a do lin := lin+args[i];
+
+if a <> 0 then begin
+        for i := 0 to a do  lin := args[i]+lin; end;
 
 if notin(unicodechar(';'),lin) then begin
         a:=a+1;
-        setlength(Args,a);
-        //args[a] := lin;
+        setlength(Args,a+1);
+        args[a] := lin;
         exit;
 end;
- {
+
 for i:=1 to length(lin) do begin
         f := length(output);
-        setlength(output,f+1);
+        setlength(output,f+2);
         g := lin[i];
         case g of
                 '0'..'9':begin   if first then begin
@@ -173,7 +174,7 @@ for i:=0 to length(output)-1 do
                 setlength(tokline,l+1);
                 tokline[l] := output[i];
                 l := l+1;
-                end; }
+                end;
 END;
 
 
@@ -191,9 +192,9 @@ begin
            readln(ty_file,line);
            lexer(line);
        End;
-     writeln(a);
-     {for i:=0 to length(tokline)-1 do
-        writeln(tokline[i].val,' ',tokline[i].tok); }
+
+     for i:=0 to length(tokline)-1 do
+        writeln(tokline[i].val,' ',tokline[i].tok);
 
      close(ty_file);
      close(pas_file);
