@@ -3,7 +3,7 @@ program TY_COMPILER;
 uses strUtils,Classes,sysUtils,crt,math;
 
 TYPE
-TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnparenthes{(},clsparenthes{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|},xorr{#},nor{~|},nxor{~#},eql{=},shftl{<<},shftr{>>},iseql{==},
+TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnprnth{(},clsprnth{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|}{,xorr{^}},nor{~|},nxor{~^},eql{=},shftl{<<},shftr{>>},iseql{==},
 nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'},str{"},dot{.},spctab{ ,        });
 token = record
         tok : TOKENS;
@@ -13,6 +13,9 @@ tokray = array of token;
 
 var
         tokline : array of token;
+        isChar : boolean;
+        isString : boolean;
+        isComment : boolean;
         first : boolean;
         ty_file : TextFile;
         pas_file : TextFile;
@@ -25,7 +28,8 @@ var
 const
          path = 'C:\Turbo-Yiddish-master\thing.ty' ;
         //namee = 'thing.txt';
-        apostophe = Char($27);
+        apostrophe = Char($27);
+        quotes = Char($22);
         tab = Char($09);
         lt = UnicodeChar(#$05d0);
         lc = UnicodeChar(#$05d1);
@@ -121,7 +125,7 @@ for i:=1 to length(lin) do begin
         f := length(output);
         setlength(output,f+2);
         g := lin[i];
-
+        if not isComment then
         case g of
                 '0'..'9':begin   if first then begin
                                 previous_line.tok := number; previous_line.val := g; first := false;
@@ -147,7 +151,367 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
+                '+':begin  if first then begin
+                                previous_line.tok := Pls; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok := Pls;
+                                previous_line.val := g;
+                        end;
 
+                end;
+
+                '-':begin  if first then begin
+                                previous_line.tok := Mns; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok := Mns;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '*':begin  if first then begin
+                                previous_line.tok := Mul; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok := Mul;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '/':begin if previous_line.tok = pwr then begin
+                                if first then begin
+                                        previous_line.tok := Root; previous_line.val := g; first := false;
+                                end
+                                else begin
+                                        output[f] := previous_line;
+                                        previous_line.tok := Root;
+                                        previous_line.val := g;
+                                end;
+
+                        end
+                        else if previous_line.tok = Divv then begin
+                                if first then
+                                        isComment := true
+
+                                else begin
+                                        output[f] := previous_line;
+                                        isComment := true;
+                                end;
+
+                        end
+                        else
+                                if first then begin
+                                        previous_line.tok := Divv; previous_line.val := g; first := false;
+                                end
+                                else begin
+                                        output[f] := previous_line;
+                                        previous_line.tok := Divv;
+                                        previous_line.val := g;
+                                end;
+
+                end;
+                '^':begin  if first then begin
+                                previous_line.tok := pwr; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok := pwr;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '{':begin  if first then begin
+                                previous_line.tok := opnbrace; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok := opnbrace;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '}':begin  if first then begin
+                                previous_line.tok := clsbrace; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok := clsbrace;
+                                previous_line.val := g;
+                        end;
+
+                end;
+
+                '[':begin  if first then begin
+                                previous_line.tok := arrsizopn; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=arrsizopn;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                ']':begin  if first then begin
+                                previous_line.tok := arrsizcls; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=arrsizcls;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '~':begin  if first then begin
+                                previous_line.tok := nnot; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=nnot;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '&':begin  if first then begin
+                                previous_line.tok := annd; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=annd;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                {'~&':begin  if first then begin
+                                previous_line.tok := nand; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=nand;
+                                previous_line.val := g;
+                        end;
+
+                end;}
+                '|':begin  if first then begin
+                                previous_line.tok := orr; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=orr;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                {'~|':begin  if first then begin
+                                previous_line.tok := nor; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=nor;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '~^':begin  if first then begin
+                                previous_line.tok := nxor; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=nxor;
+                                previous_line.val := g;
+                        end;
+
+                end;}
+                '=':begin  if first then begin
+                                previous_line.tok := eql; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=eql;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                {'<<':begin  if first then begin
+                                previous_line.tok := shftl; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=shftl;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '>>':begin  if first then begin
+                                previous_line.tok := shftr; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=shftr;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '==':begin  if first then begin
+                                previous_line.tok := iseql; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=iseql;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '<>','><':begin  if first then begin
+                                previous_line.tok := nteql; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=nteql;
+                                previous_line.val := g;
+                        end;
+
+                end;}
+                '>':begin  if first then begin
+                                previous_line.tok := bgr; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=bgr;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '<':begin  if first then begin
+                                previous_line.tok := smlr; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=smlr;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                {'=>','>=':begin  if first then begin
+                                previous_line.tok := bgeq; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=bgeq;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '=<','<=':begin  if first then begin
+                                previous_line.tok := smleq; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=smleq;
+                                previous_line.val := g;
+                        end;
+
+                end;}
+                ':':begin  if first then begin
+                                previous_line.tok := typ; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=typ;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '$':begin  if first then begin
+                                previous_line.tok := dlr; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=dlr;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '@':begin  if first then begin
+                                previous_line.tok := att; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=att;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '%':begin  if first then begin
+                                previous_line.tok := modu; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=modu;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '?':begin  if first then begin
+                                previous_line.tok := iff; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=iff;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                '!':begin  if first then begin
+                                previous_line.tok := els; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=els;
+                                previous_line.val := g;
+                        end;
+
+                end;
+
+                apostrophe:begin isChar:=not isChar;  if first then begin
+                                 first := false;
+                        end
+                        else begin
+                                if previous_line.tok = chr then begin
+                                        output[f] := previous_line;
+                                        previous_line.val :=g;       end
+                                else
+                                        previous_line.val :=previous_line.val+g ;
+                                previous_line.tok := chr;
+                        end;
+
+                end;
+                quotes:begin isChar:=not isChar;  if first then begin
+                                 first := false;
+                        end
+                        else begin
+                                if previous_line.tok = chr then   begin
+                                        output[f] := previous_line;
+                                        previous_line.val :=g; end
+                                else
+                                        previous_line.val :=previous_line.val+g ;
+                                previous_line.tok := str;
+                        end;
+
+                end;
+                '.':begin  if first then begin
+                                previous_line.tok := dot; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=dot;
+                                previous_line.val := g;
+                        end;
+
+                end;
                 ' ',tab: if not(previous_line.tok = spctab) then begin
 
                         if not first then output[f] := previous_line;
@@ -169,6 +533,7 @@ for i:=1 to length(lin) do begin
                 end;
        End;
 ENd;
+isComment := false;
 output[f+1] := previous_line;
 first := true;
 
