@@ -4,7 +4,7 @@ uses strUtils,Classes,sysUtils,crt,math;
 
 TYPE
 TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnprnth{(},clsprnth{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|}{,xorr{^}},nor{~|},nxor{~^},eql{=},shftl{<<},shftr{>>},iseql{==},
-nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'},str{"},dot{.},spctab{ ,        });
+nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'},str{"},dot{.},spctab{ ,        },bkslsh);
 token = record
         tok : TOKENS;
         val : widestring;
@@ -183,25 +183,16 @@ for i:=1 to length(lin) do begin
 
                 end;
                 '/':begin if previous_line.tok = pwr then begin
-                                if first then begin
-                                        previous_line.tok := Root; previous_line.val := g; first := false;
-                                end
-                                else begin
-                                        output[f] := previous_line;
-                                        previous_line.tok := Root;
-                                        previous_line.val := g;
-                                end;
+                                        output[f-1].tok := Root;
+                                        output[f-1].val := '^/';
+                                        previous_line.tok := spctab;
+                                        previous_line.val := '';
 
                         end
                         else if previous_line.tok = Divv then begin
-                                if first then
-                                        isComment := true
-
-                                else begin
-                                        output[f] := previous_line;
                                         isComment := true;
-                                end;
-
+                                        previous_line.tok := spctab;
+                                        previous_line.val := '';
                         end
                         else
                                 if first then begin
@@ -214,14 +205,23 @@ for i:=1 to length(lin) do begin
                                 end;
 
                 end;
-                '^':begin  if first then begin
-                                previous_line.tok := pwr; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok := pwr;
-                                previous_line.val := g;
-                        end;
+                '^':begin if previous_line.tok=nnot then begin
+                        output[f-1].tok := nxor;
+                        output[f-1].val := '~^';
+                        previous_line.tok := spctab;
+                        previous_line.val := '';
+
+                end
+                else
+                                if first then begin
+                                        previous_line.tok := pwr; previous_line.val := g; first := false;
+                                end
+                                else begin
+                                        output[f] := previous_line;
+                                        previous_line.tok :=pwr;
+                                        previous_line.val := g;
+                                        end;
+
 
                 end;
                 '{':begin  if first then begin
@@ -275,146 +275,145 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                '&':begin  if first then begin
-                                previous_line.tok := annd; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=annd;
-                                previous_line.val := g;
-                        end;
+                '&':begin if previous_line.tok=nnot then begin
+                        output[f-1].tok := nand;
+                        output[f-1].val := '~&';
+                        previous_line.tok := spctab;
+                        previous_line.val := '';
+
+                end
+                else
+                                if first then begin
+                                        previous_line.tok := annd; previous_line.val := g; first := false;
+                                end
+                                else begin
+                                        output[f] := previous_line;
+                                        previous_line.tok :=annd;
+                                        previous_line.val := g;
+                                        end;
+
 
                 end;
-                {'~&':begin  if first then begin
-                                previous_line.tok := nand; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=nand;
-                                previous_line.val := g;
-                        end;
 
-                end;}
-                '|':begin  if first then begin
-                                previous_line.tok := orr; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=orr;
-                                previous_line.val := g;
-                        end;
+                '|':begin if previous_line.tok=nnot then begin
+                        output[f-1].tok := nor;
+                        output[f-1].val := '~|';
+                        previous_line.tok := spctab;
+                        previous_line.val := '';
 
-                end;
-                {'~|':begin  if first then begin
-                                previous_line.tok := nor; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=nor;
-                                previous_line.val := g;
-                        end;
+                end
+                else
+                                if first then begin
+                                        previous_line.tok := orr; previous_line.val := g; first := false;
+                                end
+                                else begin
+                                        output[f] := previous_line;
+                                        previous_line.tok :=orr;
+                                        previous_line.val := g;
+                                        end;
+
 
                 end;
-                '~^':begin  if first then begin
-                                previous_line.tok := nxor; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=nxor;
-                                previous_line.val := g;
-                        end;
 
-                end;}
-                '=':begin  if first then begin
-                                previous_line.tok := eql; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=eql;
-                                previous_line.val := g;
-                        end;
+                '=':begin if previous_line.tok=eql then begin
+                        output[f-1].tok := iseql;
+                        output[f-1].val := '>>';
+                        previous_line.tok := iseql;
+                        previous_line.val := '';
 
-                end;
-                {'<<':begin  if first then begin
-                                previous_line.tok := shftl; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=shftl;
-                                previous_line.val := g;
-                        end;
+                end
+                else if previous_line.tok=bgr then begin
+                        output[f-1].tok := bgeq;
+                        output[f-1].val := '>=';
+                        previous_line.tok := bgeq;
+                        previous_line.val := '';
 
-                end;
-                '>>':begin  if first then begin
-                                previous_line.tok := shftr; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=shftr;
-                                previous_line.val := g;
-                        end;
+                end
+                else if previous_line.tok=smlr then begin
+                        output[f-1].tok := smleq;
+                        output[f-1].val := '>=';
+                        previous_line.tok := smleq;
+                        previous_line.val := '';
+
+                end
+                else
+                                if first then begin
+                                        previous_line.tok := eql; previous_line.val := g; first := false;
+                                end
+                                else begin
+                                        output[f] := previous_line;
+                                        previous_line.tok :=eql;
+                                        previous_line.val := g;
+                                        end;
+
 
                 end;
-                '==':begin  if first then begin
-                                previous_line.tok := iseql; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=iseql;
-                                previous_line.val := g;
-                        end;
+                '>':begin if previous_line.tok=bgr then begin
+                        output[f-1].tok := shftr;
+                        output[f-1].val := '>>';
+                        previous_line.tok := spctab;
+                        previous_line.val := '';
+
+                end
+                else if previous_line.tok=smlr then begin
+                        output[f-1].tok := nteql;
+                        output[f-1].val := '<>';
+                        previous_line.tok := nteql;
+                        previous_line.val := '';
+
+                end
+                else if previous_line.tok=bgr then begin
+                        output[f-1].tok := bgeq;
+                        output[f-1].val := '=>';
+                        previous_line.tok := bgeq;
+                        previous_line.val := '';
+
+                end
+                else
+                                if first then begin
+                                        previous_line.tok := bgr; previous_line.val := g; first := false;
+                                end
+                                else begin
+                                        output[f] := previous_line;
+                                        previous_line.tok :=bgr;
+                                        previous_line.val := g;
+                                        end;
+
 
                 end;
-                '<>','><':begin  if first then begin
-                                previous_line.tok := nteql; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=nteql;
-                                previous_line.val := g;
-                        end;
+                '<':begin if previous_line.tok=smlr then begin
+                        output[f-1].tok := shftl;
+                        output[f-1].val := '>>';
+                        previous_line.tok := spctab;
+                        previous_line.val := '';
 
-                end;}
-                '>':begin  if first then begin
-                                previous_line.tok := bgr; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=bgr;
-                                previous_line.val := g;
-                        end;
+                end
+                else if previous_line.tok=bgr then begin
+                        output[f-1].tok := nteql;
+                        output[f-1].val := '><';
+                        previous_line.tok := nteql;
+                        previous_line.val := '';
 
-                end;
-                '<':begin  if first then begin
-                                previous_line.tok := smlr; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=smlr;
-                                previous_line.val := g;
-                        end;
+                end
+                else if previous_line.tok=eql then begin
+                        output[f-1].tok := smleq;
+                        output[f-1].val := '=<';
+                        previous_line.tok := smleq;
+                        previous_line.val := '';
 
-                end;
-                {'=>','>=':begin  if first then begin
-                                previous_line.tok := bgeq; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=bgeq;
-                                previous_line.val := g;
-                        end;
+                end
+                else
+                                if first then begin
+                                        previous_line.tok := smlr; previous_line.val := g; first := false;
+                                end
+                                else begin
+                                        output[f] := previous_line;
+                                        previous_line.tok :=smlr;
+                                        previous_line.val := g;
+                                        end;
+
 
                 end;
-                '=<','<=':begin  if first then begin
-                                previous_line.tok := smleq; previous_line.val := g; first := false;
-                        end
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=smleq;
-                                previous_line.val := g;
-                        end;
-
-                end;}
                 ':':begin  if first then begin
                                 previous_line.tok := typ; previous_line.val := g; first := false;
                         end
