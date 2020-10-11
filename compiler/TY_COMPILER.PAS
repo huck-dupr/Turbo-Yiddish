@@ -15,6 +15,7 @@ var
         tokline : array of token;
         isChar : boolean;
         isString : boolean;
+        isBkslsh : boolean;
         isComment : boolean;
         first : boolean;
         ty_file : TextFile;
@@ -102,7 +103,7 @@ end;
 
 
 procedure lexer(line : widestring);
-var i,l,f : integer;    lin : widestring; g : widechar;previous_line : token ;
+var i,l,f,s : integer;    lin,strthng : widestring; g : widechar;previous_line : token ;
 
 begin
 lin := UTF8Decode(line);
@@ -474,7 +475,15 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-
+                '\':begin
+                        if isString or isChar then
+                                isBkslsh := not isBkslsh
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=Bkslsh;
+                                previous_line.val := g;
+                        end;
+                end;
                 apostrophe:begin isChar:=not isChar;  if first then begin
                                  first := false;
                         end
@@ -488,15 +497,18 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                quotes:begin isChar:=not isChar;  if first then begin
+                quotes:begin isString:=not isString;  if first then begin
                                  first := false;
                         end
                         else begin
-                                if previous_line.tok = chr then   begin
+                                if previous_line.tok = str then   begin
                                         output[f] := previous_line;
                                         previous_line.val :=g; end
-                                else
-                                        previous_line.val :=previous_line.val+g ;
+                                else  begin   s := f;
+                                        while output[s] <> widechar(#$0022) do begin
+                                                strthng :=strthng+output[s];
+                                        end;
+                                end;
                                 previous_line.tok := str;
                         end;
 
