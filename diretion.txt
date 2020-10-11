@@ -7,8 +7,13 @@
 בשעת = while
 ביז = until
 טאָן = do
+שטריקל = string
+אמתפאלש = boolean
+
 ינטאַדזשער = integer
 שרייבן = write
 שרייבנפּאַס = writeln
 לייענען = read
 ליינענפּאַס = readln
+אמת = true
+פאלש = false
