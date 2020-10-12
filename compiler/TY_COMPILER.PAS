@@ -4,7 +4,7 @@ uses strUtils,Classes,sysUtils,crt,math;
 
 TYPE
 TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnprnth{(},clsprnth{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|}{,xorr{^}},nor{~|},nxor{~^},eql{=},shftl{<<},shftr{>>},iseql{==},
-nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'},str{"},dot{.},spctab{ ,        },bkslsh);
+nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'},str{"},dot{.},spctab{ ,        },bkslsh{\},none{},qte{",'});
 token = record
         tok : TOKENS;
         val : widestring;
@@ -100,7 +100,14 @@ begin
 
 end;
 
-
+function reverse(const str : widestring) :widestring;
+var i,j : integer;
+begin
+        j:=lengthe(str);
+        setlength(reverse);
+        for i:=1 to j do
+                reverse[i] := str[j-i+1];
+end;
 
 procedure lexer(line : widestring);
 var i,l,f,s : integer;    lin,strthng : widestring; g : widechar;previous_line : token ;
@@ -500,16 +507,24 @@ for i:=1 to length(lin) do begin
                 quotes:begin isString:=not isString;  if first then begin
                                  first := false;
                         end
+                        else if previous_line.tok = bkslsh then begin
+                                previous_line.tok := qte;
+                                previous_line.val := quotes;
+                        end
                         else begin
-                                if previous_line.tok = str then   begin
-                                        output[f] := previous_line;
-                                        previous_line.val :=g; end
-                                else  begin   s := f;
-                                        while output[s] <> widechar(#$0022) do begin
-                                                strthng :=strthng+output[s];
+                                if isString then begin   s := f;
+                                        while output[s].tok <> none and output[s].tok<>quotes do begin
+                                                strthng := strthng+reverse(output[s].val);
+                                                output[s].val :='';output[s].tok :=none;
+                                                s := s-1;
                                         end;
+                                        strthng:=reverse(strthng);
+                                        previous_line.tok := str;
+                                        previous_line.val := strthng;
+                                        strthng:= '';
                                 end;
-                                previous_line.tok := str;
+                                previous_line.tok := none;
+                                previous_line.val := quotes;
                         end;
 
                 end;
