@@ -100,14 +100,6 @@ begin
 
 end;
 
-function reverse(const str : widestring) :widestring;
-var i,j : integer;
-begin
-        j:=lengthe(str);
-        setlength(reverse);
-        for i:=1 to j do
-                reverse[i] := str[j-i+1];
-end;
 
 procedure lexer(line : widestring);
 var i,l,f,s : integer;    lin,strthng : widestring; g : widechar;previous_line : token ;
@@ -193,13 +185,13 @@ for i:=1 to length(lin) do begin
                 '/':begin if previous_line.tok = pwr then begin
                                         output[f-1].tok := Root;
                                         output[f-1].val := '^/';
-                                        previous_line.tok := spctab;
+                                        previous_line.tok := none;
                                         previous_line.val := '';
 
                         end
                         else if previous_line.tok = Divv then begin
                                         isComment := true;
-                                        previous_line.tok := spctab;
+                                        previous_line.tok := none;
                                         previous_line.val := '';
                         end
                         else
@@ -216,7 +208,7 @@ for i:=1 to length(lin) do begin
                 '^':begin if previous_line.tok=nnot then begin
                         output[f-1].tok := nxor;
                         output[f-1].val := '~^';
-                        previous_line.tok := spctab;
+                        previous_line.tok := none;
                         previous_line.val := '';
 
                 end
@@ -286,7 +278,7 @@ for i:=1 to length(lin) do begin
                 '&':begin if previous_line.tok=nnot then begin
                         output[f-1].tok := nand;
                         output[f-1].val := '~&';
-                        previous_line.tok := spctab;
+                        previous_line.tok := none;
                         previous_line.val := '';
 
                 end
@@ -306,7 +298,7 @@ for i:=1 to length(lin) do begin
                 '|':begin if previous_line.tok=nnot then begin
                         output[f-1].tok := nor;
                         output[f-1].val := '~|';
-                        previous_line.tok := spctab;
+                        previous_line.tok := none;
                         previous_line.val := '';
 
                 end
@@ -359,7 +351,7 @@ for i:=1 to length(lin) do begin
                 '>':begin if previous_line.tok=bgr then begin
                         output[f-1].tok := shftr;
                         output[f-1].val := '>>';
-                        previous_line.tok := spctab;
+                        previous_line.tok := none;
                         previous_line.val := '';
 
                 end
@@ -392,7 +384,7 @@ for i:=1 to length(lin) do begin
                 '<':begin if previous_line.tok=smlr then begin
                         output[f-1].tok := shftl;
                         output[f-1].val := '>>';
-                        previous_line.tok := spctab;
+                        previous_line.tok := none;
                         previous_line.val := '';
 
                 end
@@ -512,19 +504,24 @@ for i:=1 to length(lin) do begin
                                 previous_line.val := quotes;
                         end
                         else begin
-                                if isString then begin   s := f;
-                                        while output[s].tok <> none and output[s].tok<>quotes do begin
-                                                strthng := strthng+reverse(output[s].val);
+                                if not isString then begin   s := f;
+                                        strthng := Reversestring(previous_line.val);
+                                        while (output[s].tok <> none) and (output[s].val<>quotes) do begin
+                                                strthng := strthng+Reversestring(output[s].val);
                                                 output[s].val :='';output[s].tok :=none;
                                                 s := s-1;
                                         end;
-                                        strthng:=reverse(strthng);
+                                        strthng := Reversestring(strthng);
+                                        writeln(PAS_file,strthng);
+                                        previous_line.tok := str;
+                                        previous_line.val := strthng;
                                         previous_line.tok := str;
                                         previous_line.val := strthng;
                                         strthng:= '';
-                                end;
+                                end
+                                else begin
                                 previous_line.tok := none;
-                                previous_line.val := quotes;
+                                previous_line.val := quotes;end;
                         end;
 
                 end;
