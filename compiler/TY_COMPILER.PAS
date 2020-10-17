@@ -4,7 +4,7 @@ uses strUtils,Classes,sysUtils,crt,math;
 
 TYPE
 TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnprnth{(},clsprnth{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|}{,xorr{^}},nor{~|},nxor{~^},eql{=},shftl{<<},shftr{>>},iseql{==},
-nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'},str{"},dot{.},spctab{ ,        },bkslsh{\},none{},qte{",'});
+nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'the thing'},str{"the thing"},dot{.},spctab{ ,        },bkslsh{\},none{},qte{",'});
 token = record
         tok : TOKENS;
         val : widestring;
@@ -490,8 +490,10 @@ for i:=1 to length(lin) do begin
                         end
                         else begin
                                 if not isChar then begin
-                                        previous_line.val :=g;
                                         previous_line.tok := chr;
+                                        output[f] := previous_line;
+                                        previous_line.tok := none;
+                                        previous_line.val := g;
                                 end
                                 else begin
                                         previous_line.val :=g;
@@ -518,12 +520,12 @@ for i:=1 to length(lin) do begin
                                                 s := s-1;
                                         end;
                                         strthng := Reversestring(strthng);
-                                        writeln(PAS_file,strthng);
                                         previous_line.tok := str;
                                         previous_line.val := strthng;
-                                        previous_line.tok := str;
-                                        previous_line.val := strthng;
+                                        output[f] := previous_line;
                                         strthng:= '';
+                                        previous_line.tok := none;
+                                        previous_line.val := quotes;
                                 end
                                 else begin
                                 previous_line.tok := none;
