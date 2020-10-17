@@ -483,26 +483,37 @@ for i:=1 to length(lin) do begin
                                 previous_line.val := g;
                         end;
                 end;
-                apostrophe:begin isChar := not isChar; if first then begin
-                                 first := false;
-                                 previous_line.tok := none;
-                                 previous_line.val := g;
-                        end
+                apostrophe:begin
+                        if previous_line.tok=bkslsh then
+                                previous_line.val:= g;
+                        else if (previous_line.tok= none)and(previous_line.val= g) then
+
                         else begin
-                                if not isChar then begin
-                                        previous_line.tok := chr;
-                                        output[f] := previous_line;
+                                isChar := not isChar;
+                                if first then begin
+                                        first := false;
                                         previous_line.tok := none;
                                         previous_line.val := g;
                                 end
                                 else begin
-                                        previous_line.val :=g;
-                                        previous_line.tok := none;
+                                        if not isChar then begin
+                                                previous_line.tok := chr;
+                                                output[f] := previous_line;
+                                                previous_line.tok := none;
+                                                previous_line.val := g;
+                                        end
+                                        else begin
+                                                previous_line.val :=g;
+                                                previous_line.tok := none;
+                                        end;
                                 end;
                         end;
-
                 end;
-                quotes:begin isString:=not isString;  if first then begin
+                quotes:begin
+                    if previous_line.tok=bkslsh then
+                        previous_line.val:= g;
+                    else begin
+                        isString:=not isString;  if first then begin
                                  first := false;
                                  previous_line.tok := none;
                                  previous_line.val := quotes;
@@ -531,7 +542,7 @@ for i:=1 to length(lin) do begin
                                 previous_line.tok := none;
                                 previous_line.val := quotes;end;
                         end;
-
+                    end;
                 end;
                 '.':begin  if first then begin
                                 previous_line.tok := dot; previous_line.val := g; first := false;
