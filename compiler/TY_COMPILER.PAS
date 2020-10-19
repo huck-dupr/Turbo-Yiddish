@@ -484,10 +484,12 @@ for i:=1 to length(lin) do begin
                         end;
                 end;
                 apostrophe:begin
-                        if previous_line.tok=bkslsh then
+                        if not first and (previous_line.tok=bkslsh) then
                                 previous_line.val:= g;
-                        else if (previous_line.tok= none)and(previous_line.val= g) then
-
+                        else if not first and (previous_line.tok= none)and(previous_line.val= g) then
+                                output[f] := previous_line;  //the parser will deal with empty Chars
+                                previous_line.tok := none;
+                                previous_line.val := g;
                         else begin
                                 isChar := not isChar;
                                 if first then begin
