@@ -265,6 +265,26 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
+                '(':begin  if first then begin
+                                previous_line.tok := opnprnth; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=opnprnth;
+                                previous_line.val := g;
+                        end;
+
+                end;
+                ')':begin  if first then begin
+                                previous_line.tok := clsprnth; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok :=clsprnth;
+                                previous_line.val := g;
+                        end;
+
+                end;
                 '~':begin  if first then begin
                                 previous_line.tok := nnot; previous_line.val := g; first := false;
                         end
@@ -485,11 +505,11 @@ for i:=1 to length(lin) do begin
                 end;
                 apostrophe:begin
                         if not first and (previous_line.tok=bkslsh) then
-                                previous_line.val:= g;
-                        else if not first and (previous_line.tok= none)and(previous_line.val= g) then
+                                previous_line.val:= g
+                        else if not first and (previous_line.tok= none)and(previous_line.val= g) then begin
                                 output[f] := previous_line;  //the parser will deal with empty Chars
                                 previous_line.tok := none;
-                                previous_line.val := g;
+                                previous_line.val := g; end
                         else begin
                                 isChar := not isChar;
                                 if first then begin
@@ -513,7 +533,7 @@ for i:=1 to length(lin) do begin
                 end;
                 quotes:begin
                     if previous_line.tok=bkslsh then
-                        previous_line.val:= g;
+                        previous_line.val:= g
                     else begin
                         isString:=not isString;  if first then begin
                                  first := false;
