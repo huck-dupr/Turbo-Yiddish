@@ -4,7 +4,7 @@ uses strUtils,Classes,sysUtils,crt,math;
 
 TYPE
 TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnprnth{(},clsprnth{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|}{,xorr{^}},nor{~|},nxor{~^},eql{=},shftl{<<},shftr{>>},iseql{==},
-nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'the thing'},str{"the thing"},dot{.},spctab{ ,        },bkslsh{\},none{},qte{",'});
+nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'the thing'},str{"the thing"},dot{.},spctab{ ,        },bkslsh{\},none{},qte{",'},swch{#});
 token = record
         tok : TOKENS;
         val : widestring;
@@ -17,6 +17,7 @@ var
         isString : boolean;
         isBkslsh : boolean;
         isComment : boolean;
+        isLComment : boolean;
         first : boolean;
         ty_file : TextFile;
         pas_file : TextFile;
@@ -102,7 +103,7 @@ end;
 
 
 procedure lexer(line : widestring);
-var i,l,f,s : integer;    lin,strthng : widestring; g : widechar;previous_line : token ;
+var i,l,f,s : integer;    lin,strthng : widestring; g,eoa : widechar;previous_line : token ;
 
 begin
 lin := UTF8Decode(line);
@@ -116,18 +117,20 @@ if notin(unicodechar(';'),lin) then begin
 end;
 
 
-if a <> 0 then
-        for i := 0 to a do lin := args[i]+' '+lin;
-
-
+{if a <> 0 then begin
+        for i := 0 to a do Args[0] := args[i]+' '+lin; if Pos('//',args[i]) then  lin:=Args[0]+' '+lin; end;
+ }
+a:=0;
+setlength(Args,0);
 
 for i:=1 to length(lin) do begin
+        if (previous_line.val ='*') and (previous_line.tok = none) then previous_line.val :='';
         f := length(output);
         setlength(output,f+2);
         g := lin[i];
-        if not isComment then
         case g of
-                '0'..'9':begin   if first then begin
+
+                '0'..'9':if not isComment then begin  if first then begin
                                 previous_line.tok := number; previous_line.val := g; first := false;
                         end
                         else if (previous_line.tok = keyword) or (previous_line.tok = number) then
@@ -141,7 +144,7 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                ';':begin  if first then begin
+                ';':if not isComment then begin  if first then begin
                                 previous_line.tok := EOL; previous_line.val := g; first := false;
                         end
                         else begin
@@ -151,7 +154,7 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                '+':begin  if first then begin
+                '+':if not isComment then begin  if first then begin
                                 previous_line.tok := Pls; previous_line.val := g; first := false;
                         end
                         else begin
@@ -161,9 +164,18 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
+                '#':if not isComment then begin  if first then begin
+                                previous_line.tok := swch; previous_line.val := g; first := false;
+                        end
+                        else begin
+                                output[f] := previous_line;
+                                previous_line.tok := swch;
+                                previous_line.val := g;
+                        end;
 
-                '-':begin  if first then begin
-                                previous_line.tok := Mns; previous_line.val := g; first := false;
+                end;
+                '-':if not isComment then begin  if first then begin
+                                output[f] := previous_line;previous_line.tok := Mns; previous_line.val := g; first := false;
                         end
                         else begin
                                 output[f] := previous_line;
@@ -172,8 +184,15 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                '*':begin  if first then begin
+                '*':begin
+                        if first then begin
                                 previous_line.tok := Mul; previous_line.val := g; first := false;
+                        end
+                        else if previous_line.tok = divv then begin
+                                previous_line.tok := none;
+                                previous_line.val := '/*';
+                                isLComment := true;
+                                isComment := true;
                         end
                         else begin
                                 output[f] := previous_line;
@@ -182,7 +201,23 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                '/':begin if previous_line.tok = pwr then begin
+                '\':begin
+                        if isComment<>true  then  begin  writeln('hey');
+                                if isString or isChar then
+                                        isBkslsh := not isBkslsh
+                                else begin
+                                        output[f] := previous_line;
+                                        previous_line.tok :=Bkslsh;
+                                        previous_line.val := g;
+                                end;
+                        end
+                        else if (previous_line.tok = none)and(previous_line.val = '\') then begin
+                                previous_line.val :='';isComment:=false;isLComment := false;  end
+                        else  begin
+                                previous_line.val :='\'; previous_line.tok :=none;   end;
+
+                end;
+                '/':if not isComment then begin if previous_line.tok = pwr then begin
                                         output[f-1].tok := Root;
                                         output[f-1].val := '^/';
                                         previous_line.tok := none;
@@ -205,7 +240,7 @@ for i:=1 to length(lin) do begin
                                 end;
 
                 end;
-                '^':begin if previous_line.tok=nnot then begin
+                '^':if not isComment then begin if previous_line.tok=nnot then begin
                         output[f-1].tok := nxor;
                         output[f-1].val := '~^';
                         previous_line.tok := none;
@@ -224,7 +259,7 @@ for i:=1 to length(lin) do begin
 
 
                 end;
-                '{':begin  if first then begin
+                '{':if not isComment then begin  if first then begin
                                 previous_line.tok := opnbrace; previous_line.val := g; first := false;
                         end
                         else begin
@@ -234,7 +269,7 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                '}':begin  if first then begin
+                '}':if not isComment then begin  if first then begin
                                 previous_line.tok := clsbrace; previous_line.val := g; first := false;
                         end
                         else begin
@@ -245,7 +280,7 @@ for i:=1 to length(lin) do begin
 
                 end;
 
-                '[':begin  if first then begin
+                '[':if not isComment then begin  if first then begin
                                 previous_line.tok := arrsizopn; previous_line.val := g; first := false;
                         end
                         else begin
@@ -255,7 +290,7 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                ']':begin  if first then begin
+                ']':if not isComment then begin  if first then begin
                                 previous_line.tok := arrsizcls; previous_line.val := g; first := false;
                         end
                         else begin
@@ -265,7 +300,7 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                '(':begin  if first then begin
+                '(':if not isComment then begin  if first then begin
                                 previous_line.tok := opnprnth; previous_line.val := g; first := false;
                         end
                         else begin
@@ -275,7 +310,7 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                ')':begin  if first then begin
+                ')':if not isComment then begin  if first then begin
                                 previous_line.tok := clsprnth; previous_line.val := g; first := false;
                         end
                         else begin
@@ -285,7 +320,7 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                '~':begin  if first then begin
+                '~':if not isComment then begin  if first then begin
                                 previous_line.tok := nnot; previous_line.val := g; first := false;
                         end
                         else begin
@@ -295,14 +330,14 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                '&':begin if previous_line.tok=nnot then begin
+                '&':if not isComment then begin if previous_line.tok=nnot then begin
                         output[f-1].tok := nand;
                         output[f-1].val := '~&';
                         previous_line.tok := none;
                         previous_line.val := '';
 
                 end
-                else
+                else if not isComment then
                                 if first then begin
                                         previous_line.tok := annd; previous_line.val := g; first := false;
                                 end
@@ -494,15 +529,7 @@ for i:=1 to length(lin) do begin
                         end;
 
                 end;
-                '\':begin
-                        if isString or isChar then
-                                isBkslsh := not isBkslsh
-                        else begin
-                                output[f] := previous_line;
-                                previous_line.tok :=Bkslsh;
-                                previous_line.val := g;
-                        end;
-                end;
+
                 apostrophe:begin
                         if not first and (previous_line.tok=bkslsh) then
                                 previous_line.val:= g
@@ -597,7 +624,7 @@ for i:=1 to length(lin) do begin
                 end;
        End;
 ENd;
-isComment := false;
+isComment := isLComment;
 output[f+1] := previous_line;
 first := true;
 
@@ -628,7 +655,7 @@ begin
        End;
 
      for i:=0 to length(tokline)-1 do
-        writeln(tokline[i].val,' ',tokline[i].tok);
+        writeln(pas_file,tokline[i].val,' ',tokline[i].tok);
 
      close(ty_file);
      close(pas_file);
