@@ -9,7 +9,7 @@
 טאָן = do
 שטריקל = string
 אמתפאלש = boolean
-
+בריוו = char
 ינטאַדזשער = integer
 שרייבן = write
 שרייבנפּאַס = writeln
