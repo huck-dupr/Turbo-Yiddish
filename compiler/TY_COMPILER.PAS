@@ -4,7 +4,7 @@ uses strUtils,Classes,sysUtils,crt,math;
 
 TYPE
 TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnprnth{(},clsprnth{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|}{,xorr{^}},nor{~|},nxor{~^},eql{=},shftl{<<},shftr{>>},iseql{==},
-nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'the thing'},str{"the thing"},dot{.},spctab{ ,        },bkslsh{\},none{},qte{",'},swch{#});
+nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'the thing'},str{"the thing"},dot{.},spctab{ ,        },bkslsh{\},none{},qte{",'},swch{#},codechar{for string formating});
 token = record
         tok : TOKENS;
         val : widestring;
@@ -536,12 +536,16 @@ for i:=1 to length(lin) do begin
                 end;
 
                 apostrophe: if not isComment then begin
-                        if (previous_line.tok=bkslsh) and (previous_line.val= g) then
-                                previous_line.val:=apostrophe
+                        if isBkslsh and (previous_line.tok=Bkslsh) then begin
+                                output[f] := previous_line;
+                                previous_line.val:=apostrophe; //writeln('hey');
+                                previous_line.tok:=Chr;
+                                isBkslsh := false;                                         end
                         else if isChar and (previous_line.tok= none)and(previous_line.val= g) then begin
                                 output[f] := previous_line;  //the parser will deal with empty Chars
-                                previous_line.tok := Chr;
+                                previous_line.tok := Chr; writeln('hey');
                                 isChar := false;
+
                                 previous_line.val := ''; end
                         {else if isChar and isBkslsh then begin
                                 previous_line.val := apostrophe;
