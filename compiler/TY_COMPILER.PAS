@@ -4,7 +4,7 @@ uses strUtils,Classes,sysUtils,crt,math;
 
 TYPE
 TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnprnth{(},clsprnth{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|}{,xorr{^}},nor{~|},nxor{~^},eql{=},shftl{<<},shftr{>>},iseql{==},
-nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'the thing'},str{"the thing"},dot{.},spctab{ ,        },bkslsh{\},none{},qte{",'},swch{#},codechar{for string formating});
+nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'the thing'},str{"the thing"},dot{.},spctab{ ,        },bkslsh{\},none{},swch{#},codechar{for string formating});
 token = record
         tok : TOKENS;
         val : widestring;
@@ -208,8 +208,12 @@ for i:=1 to length(lin) do begin
                 end;
                 '\':begin
                         if not isComment  then  begin
-                                if isString or isChar then
-                                        isBkslsh := not isBkslsh
+                                if isString or isChar then begin
+                                        isBkslsh := not isBkslsh;
+                                        output[f] := previous_line;
+                                        previous_line.tok := bkslsh;
+                                        previous_line.val := '';
+                                end
                                 else begin
                                         output[f] := previous_line;
                                         previous_line.tok :=Bkslsh;
@@ -573,17 +577,17 @@ for i:=1 to length(lin) do begin
                         end;
                 end;
                 quotes: if not isComment then begin
-                    if previous_line.tok=bkslsh then
-                        previous_line.val:= g
+                    if (previous_line.tok=bkslsh) and isBkslsh then begin
+                        output[f] := previous_line;
+                        previous_line.val:= g;
+                        previous_line.tok:= str;
+                        end
                     else begin
-                        isString:=not isString;  if first then begin
+                        isString:=not isString;
+                        if first then begin
                                  first := false;
                                  previous_line.tok := none;
                                  previous_line.val := quotes;
-                        end
-                        else if previous_line.tok = bkslsh then begin
-                                previous_line.tok := qte;
-                                previous_line.val := quotes;
                         end
                         else begin
                                 if not isString then begin   s := f;
@@ -602,6 +606,7 @@ for i:=1 to length(lin) do begin
                                         previous_line.val := quotes;
                                 end
                                 else begin
+                                output[f] := previous_line;
                                 previous_line.tok := none;
                                 previous_line.val := quotes;end;
                         end;
