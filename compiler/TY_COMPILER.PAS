@@ -208,7 +208,14 @@ for i:=1 to length(lin) do begin
                 end;
                 '\':begin
                         if not isComment  then  begin
-                                if isString or isChar then begin
+                                if (isString or isChar) and (previous_line.tok = Bkslsh) and (isBkslsh) then begin
+                                        isBkslsh := false;
+                                        output[f] := previous_line;
+                                        previous_line.tok := str;
+                                        previous_line.val := '\';
+                                        writeln('heyyeyeyiyyii');
+                                end
+                                else if (isString or isChar) then begin
                                         isBkslsh := not isBkslsh;
                                         output[f] := previous_line;
                                         previous_line.tok := bkslsh;
@@ -629,9 +636,23 @@ for i:=1 to length(lin) do begin
                         previous_line.val := g;
                 end;
 
-                else  if not isComment then begin  if first then begin
+                else  if not isComment then begin
+                        if first then begin
                                 previous_line.tok := keyword; previous_line.val := g; first := false;
                         end
+                        else if (previous_line.tok = Bkslsh) and isBkslsh and ((g=lb) or (g=lc)) then begin
+                                if g=lb then begin
+                                        isBkslsh := false;
+                                        output[f] := previous_line;
+                                        previous_line.tok := str;
+                                        previous_line.val := sLineBreak;
+                                end
+                                else begin
+                                        isBkslsh := false;
+                                        output[f] := previous_line;
+                                        previous_line.tok := spctab;
+                                        previous_line.val := widestring(#$007f);
+                                end; end
                         else if (previous_line.tok = keyword) then
                                 previous_line.val :=previous_line.val+g
                         else begin
