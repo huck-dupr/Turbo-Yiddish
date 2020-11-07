@@ -88,7 +88,6 @@ end;
 
 
 
-
 function change_filetype(const org_path,new_path : string): string;
 var i,j : integer;lin:string;g:char;
 begin
