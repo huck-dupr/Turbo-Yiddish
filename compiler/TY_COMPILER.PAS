@@ -17,6 +17,7 @@ var
         isString : boolean;
         isBkslsh : boolean;
         isComment : boolean;
+        strdel : boolean;
         isLComment : boolean;
         first : boolean;
         ty_file : TextFile;
@@ -599,8 +600,11 @@ for i:=1 to length(lin) do begin
                                 if not isString then begin   s := f;
                                         strthng := Reversestring(previous_line.val);
                                         while (output[s].tok <> none) and (output[s].val<>quotes) do begin
-                                                strthng := strthng+Reversestring(output[s].val);
+                                                if pos(widechar(#$007f),output[s].val)<>0 then strdel := true;
+                                                if not strdel then strthng := strthng+Reversestring(output[s].val);
+                                                //else delete(strthng,length(strthng)-1,1);
                                                 output[s].val :='';output[s].tok :=none;
+                                                strdel := false;
                                                 s := s-1;
                                         end;
                                         strthng := Reversestring(strthng);
@@ -639,19 +643,24 @@ for i:=1 to length(lin) do begin
                         if first then begin
                                 previous_line.tok := keyword; previous_line.val := g; first := false;
                         end
-                        else if (previous_line.tok = Bkslsh) and isBkslsh and ((g=lb) or (g=lc)) then begin
+                        else if (previous_line.tok = Bkslsh) and isBkslsh and ((g=lb) or (g=lc)) then
                                 if g=lb then begin
                                         isBkslsh := false;
                                         output[f] := previous_line;
                                         previous_line.tok := str;
                                         previous_line.val := sLineBreak;
                                 end
-                                else begin
+                                else if previous_line.tok <> Bkslsh begin
+                                        isBkslsh := false;
+                                        previous_line.val := delete(previous_line.val,length(previous_line.val)-1,1);
+                                end
+                                else
                                         isBkslsh := false;
                                         output[f] := previous_line;
                                         previous_line.tok := spctab;
-                                        previous_line.val := widestring(#$007f);
-                                end; end
+                                        previous_line.val := widechar(#$007f);
+                                end
+
                         else if (previous_line.tok = keyword) then
                                 previous_line.val :=previous_line.val+g
                         else begin
