@@ -208,15 +208,32 @@ for i:=1 to length(lin) do begin
                 end;
                 '\':begin
                         if not isComment  then  begin
-                                if (isString or isChar) and (previous_line.tok = Bkslsh) and (isBkslsh) then begin
+                                if isString or isChar and (previous_line.tok = Bkslsh) and (isBkslsh) then begin
                                         isBkslsh := false;
                                         output[f] := previous_line;
                                         previous_line.tok := str;
                                         previous_line.val := '\';
-                                        writeln('heyyeyeyiyyii');
+                                        //writeln('heyyeyeyiyyii');
                                 end
-                                else if (isString or isChar) then begin
-                                        isBkslsh := not isBkslsh;
+                                else if (isString or isChar) and not isBkslsh then begin
+                                        isBkslsh := true;
+                                        s := f;
+                                        strthng := Reversestring(previous_line.val);
+                                        while (output[s].tok <> bkslsh) do begin
+                                                strthng := strthng+Reversestring(output[s].val);
+                                                output[s].val :=''; output[s].tok :=none;
+                                                strdel := false;
+                                                s := s-1;
+                                        end;
+                                        strthng := Reversestring(strthng);
+                                        previous_line.tok := codechar; &
+                                        previous_line.val := strthng;
+                                        output[f] := previous_line;
+                                        previous_line.tok := bkslsh;
+                                        previous_line.val := '';
+                                end
+                                else if (isString or isChar) and isBkslsh then begin
+                                        isBkslsh := false;
                                         output[f] := previous_line;
                                         previous_line.tok := bkslsh;
                                         previous_line.val := '';
@@ -547,7 +564,7 @@ for i:=1 to length(lin) do begin
                 end;
 
                 apostrophe: if not isComment then begin
-                        if isBkslsh and (previous_line.tok=Bkslsh) then begin
+                        if (isBkslsh and (previous_line.tok=Bkslsh)) or isString then begin
                                 output[f] := previous_line;
                                 previous_line.val:=apostrophe; //writeln('hey');
                                 previous_line.tok:=Chr;
@@ -584,7 +601,7 @@ for i:=1 to length(lin) do begin
                         end;
                 end;
                 quotes: if not isComment then begin
-                    if (previous_line.tok=bkslsh) and isBkslsh then begin
+                    if ((previous_line.tok=bkslsh) and isBkslsh) or isChar then begin
                         output[f] := previous_line;
                         previous_line.val:= g;
                         previous_line.tok:= str;
@@ -600,9 +617,8 @@ for i:=1 to length(lin) do begin
                                 if not isString then begin   s := f;
                                         strthng := Reversestring(previous_line.val);
                                         while (output[s].tok <> none) and (output[s].val<>quotes) do begin
-                                                if pos(widechar(#$007f),output[s].val)<>0 then strdel := true;
-                                                if not strdel then strthng := strthng+Reversestring(output[s].val);
-                                                //else delete(strthng,length(strthng)-1,1);
+                                                //if pos(widechar(#$007f),output[s].val)<>0 then strdel := true;
+                                                strthng := strthng+Reversestring(output[s].val);
                                                 output[s].val :='';output[s].tok :=none;
                                                 strdel := false;
                                                 s := s-1;
