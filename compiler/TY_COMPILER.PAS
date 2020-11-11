@@ -226,7 +226,7 @@ for i:=1 to length(lin) do begin
                                                 s := s-1;
                                         end;
                                         strthng := Reversestring(strthng);
-                                        previous_line.tok := codechar; &
+                                        previous_line.tok := codechar;
                                         previous_line.val := strthng;
                                         output[f] := previous_line;
                                         previous_line.tok := bkslsh;
@@ -655,20 +655,20 @@ for i:=1 to length(lin) do begin
                         previous_line.val := g;
                 end;
 
-                else  if not isComment then begin
+                else if not isComment then begin
                         if first then begin
                                 previous_line.tok := keyword; previous_line.val := g; first := false;
                         end
-                        else if (previous_line.tok = Bkslsh) and isBkslsh and ((g=lb) or (g=lc)) then
+                        else if (previous_line.tok = Bkslsh) and isBkslsh and ((g=lb) or (g=lc)) then begin
                                 if g=lb then begin
                                         isBkslsh := false;
                                         output[f] := previous_line;
                                         previous_line.tok := str;
                                         previous_line.val := sLineBreak;
                                 end
-                                else if previous_line.tok <> Bkslsh begin
+                                else if previous_line.tok <> Bkslsh then begin
                                         isBkslsh := false;
-                                        previous_line.val := delete(previous_line.val,length(previous_line.val)-1,1);
+                                        delete(previous_line.val, length(previous_line.val)-1,1);
                                 end
                                 else
                                         isBkslsh := false;
@@ -676,9 +676,10 @@ for i:=1 to length(lin) do begin
                                         previous_line.tok := spctab;
                                         previous_line.val := widechar(#$007f);
                                 end
-
-                        else if (previous_line.tok = keyword) then
+                        end
+                        else if (previous_line.tok = keyword) then begin
                                 previous_line.val :=previous_line.val+g
+                        end
                         else begin
 
                                 output[f] := previous_line;
@@ -686,6 +687,7 @@ for i:=1 to length(lin) do begin
                                 previous_line.val := g;
                         end;
                 end;
+
        End;
 ENd;
 isComment := isLComment;
