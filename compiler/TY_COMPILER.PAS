@@ -208,15 +208,21 @@ for i:=1 to length(lin) do begin
                 end;
                 '\':begin
                         if not isComment  then  begin
-                                if isString or isChar and (previous_line.tok = Bkslsh) and (isBkslsh) then begin
+                                if  (previous_line.tok = Bkslsh) and isBkslsh and (isString or isChar) then begin
                                         isBkslsh := false;
                                         output[f] := previous_line;
                                         previous_line.tok := str;
                                         previous_line.val := '\';
-                                        //writeln('heyyeyeyiyyii');
+                                        writeln('tehc');
                                 end
                                 else if (isString or isChar) and not isBkslsh then begin
-                                        isBkslsh := true;
+                                        isBkslsh := true; writeln('stonks');
+                                end
+                                else if (isString or isChar) and isBkslsh then begin
+                                        isBkslsh := false;   writeln('heyyeyeyiyyii');
+                                        output[f] := previous_line;
+                                        previous_line.tok := bkslsh;
+                                        previous_line.val := '';
                                         s := f;
                                         strthng := Reversestring(previous_line.val);
                                         while (output[s].tok <> bkslsh) do begin
@@ -232,15 +238,9 @@ for i:=1 to length(lin) do begin
                                         previous_line.tok := bkslsh;
                                         previous_line.val := '';
                                 end
-                                else if (isString or isChar) and isBkslsh then begin
-                                        isBkslsh := false;
-                                        output[f] := previous_line;
-                                        previous_line.tok := bkslsh;
-                                        previous_line.val := '';
-                                end
                                 else begin
                                         output[f] := previous_line;
-                                        previous_line.tok :=Bkslsh;
+                                        previous_line.tok := Bkslsh;
                                         previous_line.val := g;
                                 end;
                         end
@@ -632,9 +632,10 @@ for i:=1 to length(lin) do begin
                                         previous_line.val := quotes;
                                 end
                                 else begin
-                                output[f] := previous_line;
-                                previous_line.tok := none;
-                                previous_line.val := quotes;end;
+                                        output[f] := previous_line;
+                                        previous_line.tok := none;
+                                        previous_line.val := quotes;
+                                end;
                         end;
                     end;
                 end;
@@ -670,7 +671,7 @@ for i:=1 to length(lin) do begin
                                         isBkslsh := false;
                                         delete(previous_line.val, length(previous_line.val)-1,1);
                                 end
-                                else
+                                else begin
                                         isBkslsh := false;
                                         output[f] := previous_line;
                                         previous_line.tok := spctab;
