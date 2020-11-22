@@ -4,7 +4,7 @@ uses strUtils,Classes,sysUtils,crt,math;
 
 TYPE
 TOKENS = (NUMBER,EOL,KEYWORD,PLS{+},MNS{-},MUL{*},DIVV{/},PWR{^},ROOT{^/},opnprnth{(},clsprnth{)},opnbrace(*{*),clsbrace(*}*),arrsizopn{[},arrsizcls{]},nnot{~},annd{&},nand{~&},orr{|}{,xorr{^}},nor{~|},nxor{~^},eql{=},shftl{<<},shftr{>>},iseql{==},
-nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'the thing'},str{"the thing"},dot{.},spctab{ ,        },bkslsh{\},none{},swch{#},codechar{for string formating});
+nteql{<>,><},bgr{>},smlr{<},bgeq{=>,>=},smleq{<=,=<},typ{:},dlr(*$*),att{@},modu{%},iff{?},els{!},chr{'the thing'},str{"the thing"},dot{.},spctab{ ,        },bkslsh{\},none{},swch{#},cdstr{for string formating},cdchr{likewise for chars});
 token = record
         tok : TOKENS;
         val : widestring;
@@ -103,7 +103,7 @@ end;
 
 
 procedure lexer(line : widestring);
-var i,l,f,s : integer;    lin,strthng : widestring; g,eoa : widechar;previous_line : token ;
+var i,l,f,s,cd : integer;   strthng : array of widestring; lin : widestring; g,eoa : widechar;previous_line : token ;
 
 begin
 lin := UTF8Decode(line);
@@ -219,7 +219,7 @@ for i:=1 to length(lin) do begin
                                         isBkslsh := true; writeln('stonks');
                                 end
                                 else if (isString or isChar) and isBkslsh then begin
-                                        isBkslsh := false;   writeln('heyyeyeyiyyii');
+                                        {isBkslsh := false;   writeln('heyyeyeyiyyii');
                                         output[f] := previous_line;
                                         previous_line.tok := bkslsh;
                                         previous_line.val := '';
@@ -236,7 +236,7 @@ for i:=1 to length(lin) do begin
                                         previous_line.val := strthng;
                                         output[f] := previous_line;
                                         previous_line.tok := bkslsh;
-                                        previous_line.val := '';
+                                        previous_line.val := '';}
                                 end
                                 else begin
                                         output[f] := previous_line;
@@ -570,6 +570,7 @@ for i:=1 to length(lin) do begin
                                 previous_line.tok:=Chr;
                                 isBkslsh := false;                                         end
                         else if isChar and (previous_line.tok= none)and(previous_line.val= g) then begin
+
                                 output[f] := previous_line;  //the parser will deal with empty Chars
                                 previous_line.tok := Chr; writeln('hey');
                                 isChar := false;
@@ -613,23 +614,33 @@ for i:=1 to length(lin) do begin
                                  previous_line.tok := none;
                                  previous_line.val := quotes;
                         end
-                        else begin
+                        else begin cd := 0;
                                 if not isString then begin   s := f;
-                                        strthng := Reversestring(previous_line.val);
+                                        strthng[cd] := Reversestring(previous_line.val);
                                         while (output[s].tok <> none) and (output[s].val<>quotes) do begin
-                                                //if pos(widechar(#$007f),output[s].val)<>0 then strdel := true;
-                                                strthng := strthng+Reversestring(output[s].val);
+                                                if output[s].tok = cdstr then
+                                                        cd := cd + 1;
+                                                strthng[cd] := strthng[cd]+Reversestring(output[s].val);
                                                 output[s].val :='';output[s].tok :=none;
                                                 strdel := false;
                                                 s := s-1;
                                         end;
-                                        strthng := Reversestring(strthng);
-                                        previous_line.tok := str;
-                                        previous_line.val := strthng;
-                                        output[f] := previous_line;
-                                        strthng:= '';
+                                        for cd := 0 to length(strthng)-1 do begin
+                                                if cd mod 2 = 0 then begin
+                                                        strthng[cd] := Reversestring(strthng[cd]);
+                                                        previous_line.tok := str;
+                                                        previous_line.val := strthng[cd];
+                                                end
+                                                else begin
+                                                        previous_line.tok := cdstr;
+                                                        previous_line.val := strthng[cd];
+                                                end;
+                                                output[f] := previous_line;
+                                                f := f + 1;
+                                        end;
                                         previous_line.tok := none;
                                         previous_line.val := quotes;
+                                        strthng:= [];
                                 end
                                 else begin
                                         output[f] := previous_line;
